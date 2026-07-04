@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: lms
+
+  # 로컬 개발 기본 프로파일 → dev 토큰 발급기(DevTokenController) 활성화.
+  # 운영에서는 --spring.profiles.active=prod 등으로 덮어쓴다.
+  profiles:
+    default: dev
+
+  # 앱 런타임 커넥션 — RLS 적용 대상인 lms_app 롤
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lms
+    username: lms_app
+    password: lms_app_pw
+    driver-class-name: org.postgresql.Driver
+
+  # Flyway 마이그레이션/DDL — 테이블 소유자 lms_owner 롤로 별도 실행
+  flyway:
+    url: jdbc:postgresql://localhost:5432/lms
+    user: lms_owner
+    password: lms_owner_pw
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # 스키마는 Flyway가 관리. Hibernate는 검증만.
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+
+  # 동영상 업로드 허용 크기 (로컬 스토리지)
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 210MB
+
+# 운영 관측성 — health/info/metrics 노출 (운영에선 접근 통제 강화 권장)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: LMS SaaS
+    description: 멀티테넌트 LMS (RLS · RBAC · 기능플래그)
+
+# JWT 대칭키 (HS256). 운영에서는 환경변수/시크릿으로 주입할 것.
+app:
+  jwt:
+    secret: ${LMS_JWT_SECRET:dev-only-secret-change-me-please-32bytes-minimum!!}
+  # 업로드된 동영상 저장 위치 (로컬). 운영에선 볼륨/오브젝트 스토리지로 교체.
+  upload:
+    dir: ${LMS_UPLOAD_DIR:uploads}
+
+# 플랫폼(SaaS 제공자) 슈퍼관리자 — 요금제/자격을 테넌트 경계 넘어 관리하는 부트스트랩 계정.
+# 로컬 기본값이며, 운영에서는 반드시 환경변수/시크릿으로 강한 값을 주입할 것.
+platform:
+  admin:
+    email: ${LMS_PLATFORM_ADMIN_EMAIL:root@platform.local}
+    password: ${LMS_PLATFORM_ADMIN_PASSWORD:platform-admin-pw}

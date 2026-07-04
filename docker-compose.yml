@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lms-postgres
+    environment:
+      # 테이블 소유자 겸 마이그레이션 실행 롤. 앱은 별도 롤(lms_app)로 접속한다.
+      POSTGRES_USER: lms_owner
+      POSTGRES_PASSWORD: lms_owner_pw
+      POSTGRES_DB: lms
+    ports:
+      - "5432:5432"
+    volumes:
+      - lms-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_owner -d lms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  lms-pgdata:

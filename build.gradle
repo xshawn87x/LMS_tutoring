@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.lms'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Web / REST API
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // ORM (Spring Data JPA / Hibernate)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // 요청 검증 (@Valid / @NotBlank)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // 운영 관측성 (health / info / metrics)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // API 문서 / Swagger UI (브라우저에서 API 확인·테스트)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // AI 콘텐츠 분석 (선택) — ANTHROPIC_API_KEY 설정 시에만 활성화. 없으면 휴리스틱 분석기 사용.
+    implementation 'com.anthropic:anthropic-java:2.34.0'
+
+    // 인증: OAuth2 Resource Server (JWT)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    // DB 스키마 마이그레이션
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // PostgreSQL 드라이버
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // 보일러플레이트 감소
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.testcontainers:testcontainers-bom:2.0.5"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
