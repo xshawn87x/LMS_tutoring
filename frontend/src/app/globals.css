@@ -219,3 +219,101 @@ h2 { font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8p
 @media (max-width: 1200px) { .pf-kpis { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 1080px) { .pf-td { grid-template-columns: 1fr; } .pf-plans { grid-template-columns: 1fr; } }
 @media (max-width: 860px) { .pf-grid { grid-template-columns: 1fr; } .pf-sidebar { position: static; } }
+
+/* ===================================================================
+   학습자 포털 — Coursera 스타일 라이트 테마 (학생·학부모)
+   .learner 안에서 CSS 변수를 밝은 값으로 재정의 → 하위 컴포넌트가 자동 라이트화.
+   운영(/manage)·플랫폼(/platform)은 감싸지 않으므로 다크 유지.
+   --accent는 재정의하지 않아 학원 브랜딩(대표색상)이 그대로 반영됨.
+   =================================================================== */
+.learner {
+  --bg: #f4f6fa;
+  --panel: #ffffff;
+  --panel-2: #eef1f7;
+  --border: #e4e8f0;
+  --text: #1c2330;
+  --muted: #5f6b7d;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.learner .container { max-width: 1140px; }
+
+/* 상단바 — 흰 배경 + 은은한 그림자, 상단 고정 */
+.learner .navbar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(20, 40, 80, 0.05);
+  position: sticky; top: 0; z-index: 100;
+}
+.learner .navbar .links a { color: var(--muted); font-weight: 600; font-size: 14px; }
+.learner .navbar .links a:hover { color: var(--accent); text-decoration: none; }
+
+/* 카드 — 부드러운 그림자 + 호버 상승 */
+.learner .card {
+  box-shadow: 0 1px 2px rgba(20, 40, 80, 0.04);
+}
+
+/* 제목 위계 */
+.learner h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+.learner h2 { font-size: 20px; font-weight: 800; border: none; padding: 0; margin: 32px 0 14px; }
+
+/* 섹션 헤더 (제목 + '모두 보기' 링크) */
+.learner .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 32px 0 14px; }
+.learner .section-head h2 { margin: 0; }
+.learner .section-head a { font-size: 14px; font-weight: 700; }
+
+/* 히어로(인사 배너) — 브랜드 색 그라디언트 */
+.learner .hero {
+  background: var(--accent);
+  background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent), #001a4d 55%));
+  color: #fff; border-radius: 18px; padding: 30px 34px; margin-bottom: 8px;
+}
+.learner .hero h1 { color: #fff; margin: 0 0 6px; }
+.learner .hero p { color: rgba(255,255,255,0.88); margin: 0; font-size: 15px; }
+.learner .hero .hero-cta { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+.learner .hero .hero-cta a.button { background: #fff; color: var(--accent); }
+.learner .hero .hero-cta a.button.ghost { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+
+/* 과정 카드 그리드 */
+.course-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;
+}
+.course-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 1px 2px rgba(20, 40, 80, 0.04);
+  transition: box-shadow .16s ease, transform .16s ease;
+}
+.course-card:hover { box-shadow: 0 10px 28px rgba(20, 40, 80, 0.12); transform: translateY(-3px); }
+.course-card a { color: inherit; }
+.course-card a:hover { text-decoration: none; }
+.course-thumb {
+  aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.course-thumb .thumb-badge {
+  position: absolute; margin: 10px; align-self: flex-start;
+}
+.cc-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+.cc-title { font-weight: 700; font-size: 15.5px; line-height: 1.35; }
+.cc-desc { color: var(--muted); font-size: 13px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cc-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: auto; }
+.cc-foot { padding: 0 16px 16px; }
+
+/* 부드러운 칩 (분야·난이도) */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--panel-2); color: var(--muted);
+  border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600;
+}
+.chip.accent { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.chip.free { background: rgba(31,138,76,0.12); color: #1f8a4c; }
+.chip.paid { background: rgba(214,140,20,0.14); color: #b8860b; }
+
+/* 진도 요약 라인 (카드 하단) */
+.progress-line { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.progress-line .progress-bar { flex: 1; height: 8px; }
+
+@media (max-width: 560px) { .course-grid { grid-template-columns: 1fr 1fr; gap: 12px; } .course-thumb { font-size: 30px; } }

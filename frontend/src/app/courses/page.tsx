@@ -13,6 +13,7 @@ import {
   listCourses,
   listInterestCategories,
 } from "@/lib/api";
+import { courseEmoji, thumbStyle } from "@/lib/thumb";
 
 export default function CoursesPage() {
   const { session } = useSession();
@@ -85,8 +86,8 @@ export default function CoursesPage() {
 
   return (
     <div>
-      <h1>과정 <span className="badge tenant">테넌트 {session.tenantId.slice(0, 4)}</span></h1>
-      <p className="muted">현재 테넌트의 과정만 보입니다 (RLS). 다른 테넌트 과정은 존재해도 안 보입니다.</p>
+      <h1>과정 탐색</h1>
+      <p className="muted">우리 학원에서 열린 과정을 둘러보고 원하는 강의를 시작하세요.</p>
 
       {error && <p className="error">{error}</p>}
 
@@ -127,17 +128,26 @@ export default function CoursesPage() {
         if (visible.length === 0) return <p className="notice">조건에 맞는 과정이 없습니다.</p>;
         return (
           <>
-            <p className="muted">{visible.length}개 과정</p>
-            {visible.map((c) => (
-              <div className="card" key={c.id}>
-                <h3><Link href={`/courses/${c.id}`}>{c.title}</Link>{!c.published && <span className="pf-pill issued" style={{ marginLeft: 8, fontSize: 11 }}>비공개</span>}{c.tuitionFee > 0 && <span className="badge" style={{ marginLeft: 6 }}>{c.tuitionFee.toLocaleString("ko-KR")}원</span>}</h3>
-                <p className="muted">
-                  {c.categoryCode && <span className="badge">{categoryName(c.categoryCode)}</span>}
-                  {c.level != null && <span className="badge">{levelLabel(c.level)}</span>}
-                  {" "}{c.description ?? "설명 없음"}
-                </p>
-              </div>
-            ))}
+            <p className="muted" style={{ marginBottom: 14 }}>{visible.length}개 과정</p>
+            <div className="course-grid">
+              {visible.map((c) => (
+                <Link className="course-card" href={`/courses/${c.id}`} key={c.id}>
+                  <div className="course-thumb" style={thumbStyle(c.title)}>{courseEmoji(c.categoryCode)}</div>
+                  <div className="cc-body">
+                    <span className="cc-title">{c.title}</span>
+                    <span className="cc-desc">{c.description ?? "설명이 없습니다."}</span>
+                    <div className="cc-meta">
+                      {c.categoryCode && <span className="chip">{categoryName(c.categoryCode)}</span>}
+                      {c.level != null && <span className="chip">{levelLabel(c.level)}</span>}
+                      {c.tuitionFee > 0
+                        ? <span className="chip paid">{c.tuitionFee.toLocaleString("ko-KR")}원</span>
+                        : <span className="chip free">무료</span>}
+                      {!c.published && <span className="chip">비공개</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </>
         );
       })()}

@@ -5,6 +5,7 @@ import com.lms.auth.AppUserRepository;
 import com.lms.error.BadRequestException;
 import com.lms.error.ConflictException;
 import com.lms.error.NotFoundException;
+import com.lms.guardian.GuardianLinkRepository;
 import com.lms.security.Roles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,13 @@ public class MemberService {
 
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GuardianLinkRepository guardianLinkRepository;
 
-    public MemberService(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public MemberService(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
+                         GuardianLinkRepository guardianLinkRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.guardianLinkRepository = guardianLinkRepository;
     }
 
     @Transactional(readOnly = true)
@@ -58,7 +62,10 @@ public class MemberService {
     }
 
     public void delete(UUID userId) {
-        userRepository.delete(require(userId));
+        AppUser user = require(userId);
+        // 이 사람이 부모든 자녀든 걸려 있는 학부모-자녀 연결을 함께 제거(고아 연결 방지).
+        guardianLinkRepository.deleteByParentSubjectOrStudentSubject(user.getEmail(), user.getEmail());
+        userRepository.delete(user);
     }
 
     private AppUser require(UUID userId) {

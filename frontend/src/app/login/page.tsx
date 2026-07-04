@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/components/SessionProvider";
 import { useToast } from "@/components/ToastProvider";
 import { confirmPasswordReset, loginAccount, registerAccount, requestPasswordReset } from "@/lib/api";
+import { homePathForRoles } from "@/lib/portal";
 
 // 시드된 기관 코드 (V11). 운영에선 가입 시 발급/안내된다.
 const ORGS = [
@@ -22,7 +23,7 @@ const TENANTS = [
   { label: "테넌트 A = acme", value: "11111111-1111-1111-1111-111111111111" },
   { label: "테넌트 B = globex", value: "22222222-2222-2222-2222-222222222222" },
 ];
-const ALL_ROLES = ["STUDENT", "INSTRUCTOR", "ADMIN"];
+const ALL_ROLES = ["STUDENT", "PARENT", "INSTRUCTOR", "ADMIN"];
 
 export default function LoginPage() {
   const { session, login, setAuth, loading, logout } = useSession();
@@ -66,7 +67,7 @@ export default function LoginPage() {
           : await loginAccount({ orgCode, email, password });
       setAuth(auth);
       showToast(mode === "register" ? "회원가입이 완료되었습니다 🎉" : `환영합니다, ${auth.displayName ?? auth.subject}님`);
-      router.push("/");
+      router.push(homePathForRoles(auth.roles));
     } catch (e) {
       setError(e instanceof Error ? e.message : "요청 실패 (백엔드 실행 여부 확인)");
     } finally {
@@ -85,7 +86,7 @@ export default function LoginPage() {
     }
     try {
       await login(devTenant, devSubject || "dev-user", devRoles);
-      router.push("/");
+      router.push(homePathForRoles(devRoles));
     } catch (e) {
       setError(e instanceof Error ? e.message : "dev 로그인 실패");
     }
@@ -133,7 +134,7 @@ export default function LoginPage() {
             {session.displayName ?? session.subject} · {session.orgCode ?? session.tenantId.slice(0, 8)} · {session.roles.join(", ")}
           </p>
           <div className="row">
-            <button onClick={() => router.push("/")}>홈으로</button>
+            <button onClick={() => router.push(homePathForRoles(session.roles))}>홈으로</button>
             <button className="ghost" onClick={logout}>로그아웃</button>
           </div>
         </div>

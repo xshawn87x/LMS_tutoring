@@ -48,7 +48,7 @@ export default function CourseStudentsPage() {
 
   return (
     <div>
-      <p className="muted"><Link href="/instructor">← 강사 대시보드</Link></p>
+      <p className="muted"><Link href="/manage">← 강사 대시보드</Link></p>
       <h1>수강생 진도 <span className="muted">— {course?.title ?? courseId.slice(0, 8)}</span></h1>
       {error && <p className="error">{error}</p>}
 

@@ -679,7 +679,8 @@ export const deleteNotice = (token: string, id: string) =>
 export interface GuardianLink {
   id: string; parentSubject: string; studentSubject: string; createdAt: string;
 }
-export const myChildren = (token: string) => request<string[]>("/api/me/children", token);
+export interface ChildInfo { subject: string; displayName: string | null; }
+export const myChildren = (token: string) => request<ChildInfo[]>("/api/me/children", token);
 export const childEnrollments = (token: string, studentSubject: string) =>
   request<Enrollment[]>(`/api/me/children/${encodeURIComponent(studentSubject)}/enrollments`, token);
 export const listGuardianLinks = (token: string) => request<GuardianLink[]>("/api/admin/guardians", token);

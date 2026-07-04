@@ -6,6 +6,7 @@ import { useSession } from "@/components/SessionProvider";
 import { useFeatures } from "@/components/FeaturesProvider";
 import { useToast } from "@/components/ToastProvider";
 import { cancelEnrollment, Course, Enrollment, listCourses, myEnrollments } from "@/lib/api";
+import { thumbStyle } from "@/lib/thumb";
 
 export default function MyLearningPage() {
   const { session } = useSession();
@@ -76,21 +77,37 @@ export default function MyLearningPage() {
         <p className="notice">수강 중인 과정이 없습니다. <Link href="/courses">과정 둘러보기</Link></p>
       )}
 
-      {enrollments.map((e) => (
-        <div className="card" key={e.id}>
-          <h3>{titles[e.courseId] ?? e.courseId.slice(0, 8)}</h3>
-          <p className="muted">상태 <span className="badge">{e.status}</span> · 진도 {e.progress}%</p>
-          <div className="progress-bar"><span style={{ width: `${e.progress}%` }} /></div>
-          <div className="row" style={{ marginTop: 12 }}>
-            <Link className="button" href={`/learn/${e.courseId}`}>
-              {e.progress > 0 && e.progress < 100 ? "이어듣기 ▶" : e.progress >= 100 ? "다시 보기" : "학습 시작 ▶"}
+      <div className="course-grid">
+        {enrollments.map((e) => (
+          <div className="course-card" key={e.id}>
+            <Link href={`/learn/${e.courseId}`}>
+              <div className="course-thumb" style={thumbStyle(titles[e.courseId] ?? e.courseId)}>
+                {e.progress >= 100 ? "🎓" : "📘"}
+              </div>
             </Link>
-            <button className="ghost" disabled={busyId === e.id} onClick={() => onCancel(e)}>
-              {busyId === e.id ? "취소 중…" : "수강 취소"}
-            </button>
+            <div className="cc-body">
+              <Link href={`/courses/${e.courseId}`}><span className="cc-title">{titles[e.courseId] ?? e.courseId.slice(0, 8)}</span></Link>
+              <div className="cc-meta">
+                {e.progress >= 100
+                  ? <span className="chip free">수료 완료</span>
+                  : e.progress > 0 ? <span className="chip accent">학습 중</span> : <span className="chip">시작 전</span>}
+              </div>
+              <div className="progress-line">
+                <div className="progress-bar"><span style={{ width: `${e.progress}%` }} /></div>
+                {e.progress}%
+              </div>
+            </div>
+            <div className="cc-foot" style={{ display: "flex", gap: 8 }}>
+              <Link className="button" href={`/learn/${e.courseId}`} style={{ flex: 1, textAlign: "center" }}>
+                {e.progress > 0 && e.progress < 100 ? "이어듣기 ▶" : e.progress >= 100 ? "다시 보기" : "학습 시작 ▶"}
+              </Link>
+              <button className="ghost" disabled={busyId === e.id} onClick={() => onCancel(e)} title="수강 취소">
+                {busyId === e.id ? "…" : "취소"}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

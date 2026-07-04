@@ -15,6 +15,7 @@ import {
   myEnrollments,
   Recommendation,
 } from "@/lib/api";
+import { courseEmoji, thumbStyle } from "@/lib/thumb";
 
 export default function DashboardPage() {
   const { session, hydrated } = useSession();
@@ -71,29 +72,50 @@ export default function DashboardPage() {
     return <p className="notice">불러오는 중…</p>;
   }
 
+  const displayName = session.displayName || session.subject;
+
   return (
     <div>
-      <h1>안녕하세요, {session.subject}님 👋</h1>
-      <p className="muted">
-        <span className="badge tenant">테넌트 {session.tenantId.slice(0, 4)}</span>
-        {session.roles.map((r) => <span key={r} className="badge role">{r}</span>)}
-      </p>
+      {/* 히어로 인사 */}
+      <section className="hero">
+        <h1>안녕하세요, {displayName}님 👋</h1>
+        <p>오늘도 학습을 이어가 볼까요? 지금까지의 진도와 맞춤 추천을 확인하세요.</p>
+        <div className="hero-cta">
+          <Link className="button" href="/courses">과정 둘러보기</Link>
+          {isEnabled("ENROLLMENTS") && <Link className="button ghost" href="/my-learning">내 학습</Link>}
+        </div>
+      </section>
       {error && <p className="error">{error}</p>}
 
       {/* 이어보기 */}
       {isEnabled("ENROLLMENTS") && (
         <>
-          <h2>이어보기</h2>
+          <div className="section-head">
+            <h2>이어보기</h2>
+            {inProgress.length > 0 && <Link href="/my-learning">모두 보기 →</Link>}
+          </div>
           {inProgress.length === 0 ? (
             <p className="notice">진행 중인 과정이 없습니다. <Link href="/courses">과정 둘러보기</Link></p>
           ) : (
-            inProgress.map((e) => (
-              <div className="card" key={e.id}>
-                <h3><Link href={`/courses/${e.courseId}`}>{titles[e.courseId] ?? e.courseId.slice(0, 8)}</Link></h3>
-                <p className="muted">진도 {e.progress}%</p>
-                <div className="progress-bar"><span style={{ width: `${e.progress}%` }} /></div>
-              </div>
-            ))
+            <div className="course-grid">
+              {inProgress.map((e) => (
+                <div className="course-card" key={e.id}>
+                  <Link href={`/learn/${e.courseId}`}>
+                    <div className="course-thumb" style={thumbStyle(titles[e.courseId] ?? e.courseId)}>📘</div>
+                  </Link>
+                  <div className="cc-body">
+                    <Link href={`/courses/${e.courseId}`}><span className="cc-title">{titles[e.courseId] ?? e.courseId.slice(0, 8)}</span></Link>
+                    <div className="progress-line">
+                      <div className="progress-bar"><span style={{ width: `${e.progress}%` }} /></div>
+                      {e.progress}%
+                    </div>
+                  </div>
+                  <div className="cc-foot">
+                    <Link className="button" href={`/learn/${e.courseId}`} style={{ width: "100%", textAlign: "center" }}>이어듣기 ▶</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}
@@ -101,35 +123,33 @@ export default function DashboardPage() {
       {/* 맞춤 추천 */}
       {isLearner && isEnabled("RECOMMENDATIONS") && (
         <>
-          <h2>맞춤 추천</h2>
+          <div className="section-head">
+            <h2>맞춤 추천</h2>
+            <Link href="/me/profile">관심분야 수정 →</Link>
+          </div>
           {recs.length === 0 ? (
             <p className="notice">
               추천할 과정이 아직 없습니다. <Link href="/me/profile">관심분야·역량 설정</Link>을 업데이트해 보세요.
             </p>
           ) : (
-            recs.map((r) => (
-              <div className="card" key={r.courseId}>
-                <h3><Link href={`/courses/${r.courseId}`}>{r.title}</Link></h3>
-                <p className="muted">
-                  {r.categoryCode && <span className="badge">{r.categoryCode}</span>}
-                  {r.level != null && <span className="badge">{levelLabel(r.level)}</span>}
-                  <span className="badge role">왜? {r.reason}</span>
-                </p>
-              </div>
-            ))
+            <div className="course-grid">
+              {recs.map((r) => (
+                <Link className="course-card" href={`/courses/${r.courseId}`} key={r.courseId}>
+                  <div className="course-thumb" style={thumbStyle(r.title)}>{courseEmoji(r.categoryCode)}</div>
+                  <div className="cc-body">
+                    <span className="cc-title">{r.title}</span>
+                    <div className="cc-meta">
+                      {r.categoryCode && <span className="chip">{r.categoryCode}</span>}
+                      {r.level != null && <span className="chip">{levelLabel(r.level)}</span>}
+                    </div>
+                    <span className="chip accent" title={r.reason}>✨ {r.reason}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
-          <p className="muted"><Link href="/me/profile">내 관심분야·역량 수정 →</Link></p>
         </>
       )}
-
-      {/* 빠른 이동 */}
-      <h2>바로가기</h2>
-      <div className="row">
-        <Link href="/courses"><button className="ghost">과정 전체</button></Link>
-        {isEnabled("ENROLLMENTS") && <Link href="/my-learning"><button className="ghost">내 학습</button></Link>}
-        {isLearner && isEnabled("DIAGNOSIS") && <Link href="/me/profile"><button className="ghost">내 프로필</button></Link>}
-        {session.roles.includes("ADMIN") && <Link href="/admin/features"><button className="ghost">기능 설정</button></Link>}
-      </div>
     </div>
   );
 }

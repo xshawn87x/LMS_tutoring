@@ -1,10 +1,15 @@
 package com.lms.guardian;
 
+import com.lms.admin.MemberService;
+import com.lms.auth.AppUser;
 import com.lms.course.CourseService;
 import com.lms.enrollment.EnrollmentService;
+import com.lms.error.BadRequestException;
 import com.lms.error.ForbiddenException;
 import com.lms.tenant.TenantContext;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -42,19 +47,25 @@ class GuardianModuleTest {
     @Autowired GuardianService guardianService;
     @Autowired EnrollmentService enrollmentService;
     @Autowired CourseService courseService;
+    @Autowired MemberService memberService;
+
+    /** 실제 학생/학부모 계정을 만든다(연결은 실계정+역할을 요구한다). */
+    private AppUser account(String prefix, String role) {
+        return memberService.create(prefix + "_" + System.nanoTime() + "@acme", "password123", prefix, List.of(role));
+    }
 
     @Test
     void 연결된_자녀의_수강현황을_본다() {
         TenantContext.set(TENANT_A);
         UUID courseId = courseService.findAll().get(0).getId();
-        String child = "child_" + System.nanoTime() + "@acme";
-        enrollmentService.enroll(courseId, child);
+        AppUser child = account("child", "STUDENT");
+        enrollmentService.enroll(courseId, child.getEmail());
+        AppUser parent = account("parent", "PARENT");
 
-        String parent = "parent_" + System.nanoTime() + "@acme";
-        guardianService.link(parent, child);
+        guardianService.link(parent.getEmail(), child.getEmail());
 
-        assertThat(guardianService.childrenOf(parent)).contains(child);
-        assertThat(guardianService.childEnrollments(parent, child)).hasSize(1);
+        assertThat(guardianService.childrenOf(parent.getEmail())).contains(child.getEmail());
+        assertThat(guardianService.childEnrollments(parent.getEmail(), child.getEmail())).hasSize(1);
     }
 
     @Test
@@ -62,5 +73,35 @@ class GuardianModuleTest {
         TenantContext.set(TENANT_A);
         assertThatThrownBy(() -> guardianService.childEnrollments("stranger@acme", "someone@acme"))
                 .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void 존재하지_않는_계정은_연결할_수_없다() {
+        TenantContext.set(TENANT_A);
+        AppUser parent = account("parent", "PARENT");
+        assertThatThrownBy(() -> guardianService.link(parent.getEmail(), "ghost@acme"))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void 역할이_맞지_않으면_연결할_수_없다() {
+        TenantContext.set(TENANT_A);
+        AppUser parent = account("parent", "PARENT");
+        AppUser notStudent = account("teacher", "INSTRUCTOR");
+        assertThatThrownBy(() -> guardianService.link(parent.getEmail(), notStudent.getEmail()))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void 회원을_삭제하면_연결도_정리된다() {
+        TenantContext.set(TENANT_A);
+        AppUser child = account("child", "STUDENT");
+        AppUser parent = account("parent", "PARENT");
+        guardianService.link(parent.getEmail(), child.getEmail());
+        assertThat(guardianService.childrenOf(parent.getEmail())).contains(child.getEmail());
+
+        memberService.delete(child.getId());
+
+        assertThat(guardianService.childrenOf(parent.getEmail())).doesNotContain(child.getEmail());
     }
 }

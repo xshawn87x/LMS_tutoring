@@ -3,7 +3,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
 import { FeaturesProvider } from "@/components/FeaturesProvider";
 import { ToastProvider } from "@/components/ToastProvider";
-import { NavBar } from "@/components/NavBar";
+import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "LMS",
@@ -17,8 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <FeaturesProvider>
             <ToastProvider>
-              <NavBar />
-              <main className="container">{children}</main>
+              <AppShell>{children}</AppShell>
             </ToastProvider>
           </FeaturesProvider>
         </SessionProvider>

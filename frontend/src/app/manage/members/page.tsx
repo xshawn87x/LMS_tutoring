@@ -17,7 +17,10 @@ import {
   updateMemberRoles,
 } from "@/lib/api";
 
-const ALL_ROLES = ["STUDENT", "INSTRUCTOR", "ADMIN"];
+const ALL_ROLES = ["STUDENT", "PARENT", "INSTRUCTOR", "ADMIN"];
+
+// 회원 표시용: "이름 (이메일)" 또는 이메일만
+const memberLabel = (m: Member) => (m.displayName ? `${m.displayName} (${m.email})` : m.email);
 
 export default function MembersAdminPage() {
   const { session } = useSession();
@@ -55,6 +58,15 @@ export default function MembersAdminPage() {
   if (!session.roles.includes("ADMIN")) {
     return <div><h1>회원 관리</h1><p className="error">ADMIN(학원 관리자)만 접근할 수 있습니다.</p></div>;
   }
+
+  // 연결 대상 후보 — 실제 회원에서 역할로 추림
+  const parents = members.filter((m) => m.roles.includes("PARENT"));
+  const students = members.filter((m) => m.roles.includes("STUDENT"));
+  // 연결 목록 표에 이메일 대신 "이름 (이메일)"을 보여주기 위한 조회
+  const nameOf = (email: string) => {
+    const m = members.find((x) => x.email === email);
+    return m ? memberLabel(m) : email;
+  };
 
   const toggleRole = (list: string[], r: string) =>
     list.includes(r) ? list.filter((x) => x !== r) : [...list, r];
@@ -167,21 +179,37 @@ export default function MembersAdminPage() {
 
       <div className="card">
         <h3>학부모 · 자녀 연결</h3>
-        <p className="muted" style={{ marginTop: 0 }}>학부모 계정(이메일)과 자녀(학생 이메일)를 연결하면, 학부모가 자녀의 학습현황을 봅니다.</p>
-        <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <div style={{ minWidth: 200 }}><label>학부모 이메일</label>
-            <input value={parentSubject} onChange={(e) => setParentSubject(e.target.value)} placeholder="parent@example.com" /></div>
-          <div style={{ minWidth: 200 }}><label>자녀(학생) 이메일</label>
-            <input value={studentSubject} onChange={(e) => setStudentSubject(e.target.value)} placeholder="student@example.com" /></div>
-          <button onClick={onLink}>연결</button>
-        </div>
+        <p className="muted" style={{ marginTop: 0 }}>
+          학부모 계정과 자녀(학생) 계정을 연결하면, 학부모가 자녀의 학습현황·출석·상담을 조회합니다.
+          목록은 실제 회원에서 고릅니다(PARENT·STUDENT 역할). 없으면 위에서 먼저 회원을 추가하세요.
+        </p>
+        {parents.length === 0 || students.length === 0 ? (
+          <p className="notice">
+            연결하려면 <b>PARENT 역할 회원</b>과 <b>STUDENT 역할 회원</b>이 각각 최소 1명 필요합니다.
+            {parents.length === 0 && " (학부모 계정 없음)"}{students.length === 0 && " (학생 계정 없음)"}
+          </p>
+        ) : (
+          <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div style={{ minWidth: 220 }}><label>학부모</label>
+              <select value={parentSubject} onChange={(e) => setParentSubject(e.target.value)}>
+                <option value="">— 학부모 선택 —</option>
+                {parents.map((m) => <option key={m.id} value={m.email}>{memberLabel(m)}</option>)}
+              </select></div>
+            <div style={{ minWidth: 220 }}><label>자녀(학생)</label>
+              <select value={studentSubject} onChange={(e) => setStudentSubject(e.target.value)}>
+                <option value="">— 자녀 선택 —</option>
+                {students.map((m) => <option key={m.id} value={m.email}>{memberLabel(m)}</option>)}
+              </select></div>
+            <button onClick={onLink} disabled={!parentSubject || !studentSubject}>연결</button>
+          </div>
+        )}
         {links.length > 0 && (
           <table className="grid" style={{ marginTop: 12 }}>
             <thead><tr><th>학부모</th><th>자녀</th><th style={{ textAlign: "right" }}>작업</th></tr></thead>
             <tbody>
               {links.map((l) => (
                 <tr key={l.id}>
-                  <td>{l.parentSubject}</td><td>{l.studentSubject}</td>
+                  <td>{nameOf(l.parentSubject)}</td><td>{nameOf(l.studentSubject)}</td>
                   <td style={{ textAlign: "right" }}><button className="ghost" onClick={() => onUnlink(l)}>해제</button></td>
                 </tr>
               ))}

@@ -19,6 +19,9 @@ export function NavBar() {
   const isTeacher = !!session && (session.roles.includes("INSTRUCTOR") || session.roles.includes("ADMIN"));
   const isParent = !!session && session.roles.includes("PARENT");
 
+  // 현재 어느 포털(구역)에 있는가 — 운영 포털이면 운영 메뉴, 아니면 학습자 메뉴를 보여준다.
+  const inOps = pathname === "/manage" || pathname.startsWith("/manage/");
+
   // 알림 안읽음 수 (세션/경로 변화 시 갱신)
   const refreshUnread = useCallback(async () => {
     if (!session) { setUnread(0); return; }
@@ -39,14 +42,28 @@ export function NavBar() {
 
   return (
     <nav className="navbar">
-      <Link href={session ? "/" : "/login"} className="brand row" style={{ color: "var(--text)", gap: 8 }}>
+      <Link href={session ? (inOps ? "/manage" : "/") : "/login"} className="brand row" style={{ color: "var(--text)", gap: 8 }}>
         {brand.logo
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={brand.logo} alt="" style={{ height: 24, maxWidth: 100, objectFit: "contain" }} />
           : null}
         {brand.name || "LMS"}
+        {inOps && <span className="badge role" style={{ marginLeft: 4 }}>운영</span>}
       </Link>
-      {session && (
+      {session && inOps && (
+        // 운영 포털 메뉴 (강사·관리자). 강사=교육 도구만, 관리자=교육+학원운영 전체.
+        <span className="links">
+          <Link href="/manage">대시보드</Link>
+          <Link href="/manage/groups">반·출석</Link>
+          <Link href="/me/notifications" title="알림">🔔{unread > 0 && <span className="pf-pill issued" style={{ marginLeft: 2, padding: "0 6px", fontSize: 11 }}>{unread}</span>}</Link>
+          {isAdmin && <Link href="/manage/members">회원</Link>}
+          {isAdmin && <Link href="/manage/market">마켓</Link>}
+          {isAdmin && <Link href="/manage/settings">환경설정</Link>}
+          {isAdmin && <Link href="/manage/features">기능</Link>}
+        </span>
+      )}
+      {session && !inOps && (
+        // 학습자 포털 메뉴 (학생·학부모). 운영자에겐 운영 포털 진입 링크를 덧붙인다.
         <span className="links">
           <Link href="/">홈</Link>
           <Link href="/courses">과정</Link>
@@ -55,12 +72,7 @@ export function NavBar() {
           <Link href="/me/notifications" title="알림">🔔{unread > 0 && <span className="pf-pill issued" style={{ marginLeft: 2, padding: "0 6px", fontSize: 11 }}>{unread}</span>}</Link>
           {isLearner && isEnabled("CERTIFICATES") && <Link href="/certificates">수료증</Link>}
           {isParent && <Link href="/children">자녀 현황</Link>}
-          {isTeacher && <Link href="/instructor">강사 대시보드</Link>}
-          {isTeacher && <Link href="/admin/groups">반·출석</Link>}
-          {isAdmin && <Link href="/admin/members">회원</Link>}
-          {isAdmin && <Link href="/admin/market">마켓</Link>}
-          {isAdmin && <Link href="/admin/settings">환경설정</Link>}
-          {isAdmin && <Link href="/admin/features">기능</Link>}
+          {isTeacher && <Link href="/manage" className="muted">운영 포털 →</Link>}
         </span>
       )}
       <span className="spacer" />

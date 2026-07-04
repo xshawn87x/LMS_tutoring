@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/SessionProvider";
-import { Enrollment, childEnrollments, myChildren } from "@/lib/api";
+import { ChildInfo, Enrollment, childEnrollments, myChildren } from "@/lib/api";
 
 export default function ChildrenPage() {
   const { session } = useSession();
-  const [children, setChildren] = useState<string[]>([]);
+  const [children, setChildren] = useState<ChildInfo[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ export default function ChildrenPage() {
     try {
       const kids = await myChildren(session.token);
       setChildren(kids);
-      setSelected((cur) => cur ?? kids[0] ?? null);
+      setSelected((cur) => cur ?? kids[0]?.subject ?? null);
     } catch (e) { setError(e instanceof Error ? e.message : "불러오기 실패"); }
     finally { setLoading(false); }
   }, [session]);
@@ -48,11 +48,13 @@ export default function ChildrenPage() {
         <>
           <div className="row" style={{ marginBottom: 12 }}>
             {children.map((c) => (
-              <button key={c} className={selected === c ? "" : "ghost"} onClick={() => setSelected(c)}>{c}</button>
+              <button key={c.subject} className={selected === c.subject ? "" : "ghost"} onClick={() => setSelected(c.subject)}>
+                {c.displayName ? `${c.displayName} (${c.subject})` : c.subject}
+              </button>
             ))}
           </div>
           <div className="card">
-            <h3>{selected} 님의 수강 현황</h3>
+            <h3>{children.find((c) => c.subject === selected)?.displayName ?? selected} 님의 수강 현황</h3>
             {enrollments.length === 0 ? <p className="notice">수강 중인 강의가 없습니다.</p> : (
               <table className="grid">
                 <thead><tr><th>강의</th><th>상태</th><th style={{ textAlign: "right" }}>진도</th></tr></thead>

@@ -68,7 +68,7 @@ export default function InstructorDashboardPage() {
             <span style={{ width: `${s.avgProgress}%` }} />
           </div>
           <div style={{ marginTop: 10 }}>
-            <Link className="button" href={`/instructor/${s.courseId}`}>수강생 진도 상세 →</Link>
+            <Link className="button" href={`/manage/courses/${s.courseId}`}>수강생 진도 상세 →</Link>
           </div>
         </div>
       ))}

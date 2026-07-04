@@ -34,11 +34,11 @@ public class GuardianController {
 
     // --- 학부모(PARENT) ---
 
-    /** 내 자녀(연결된 학생 이메일) 목록. */
+    /** 내 자녀(연결된 학생) 목록 — 이메일 + 표시이름. */
     @GetMapping("/api/me/children")
     @PreAuthorize("hasAnyRole('PARENT','ADMIN')")
-    public List<String> myChildren(@AuthenticationPrincipal Jwt jwt) {
-        return service.childrenOf(jwt.getSubject());
+    public List<GuardianService.ChildInfo> myChildren(@AuthenticationPrincipal Jwt jwt) {
+        return service.childrenDetailedOf(jwt.getSubject());
     }
 
     /** 자녀의 수강 현황(진도). 연결된 자녀만. */
