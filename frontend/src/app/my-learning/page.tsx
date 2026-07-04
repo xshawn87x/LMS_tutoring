@@ -6,7 +6,7 @@ import { useSession } from "@/components/SessionProvider";
 import { useFeatures } from "@/components/FeaturesProvider";
 import { useToast } from "@/components/ToastProvider";
 import { cancelEnrollment, Course, Enrollment, listCourses, myEnrollments } from "@/lib/api";
-import { thumbStyle } from "@/lib/thumb";
+import { thumbBg } from "@/lib/thumb";
 
 export default function MyLearningPage() {
   const { session } = useSession();
@@ -81,8 +81,8 @@ export default function MyLearningPage() {
         {enrollments.map((e) => (
           <div className="course-card" key={e.id}>
             <Link href={`/learn/${e.courseId}`}>
-              <div className="course-thumb" style={thumbStyle(titles[e.courseId] ?? e.courseId)}>
-                {e.progress >= 100 ? "🎓" : "📘"}
+              <div className="course-thumb" style={thumbBg(titles[e.courseId] ?? e.courseId)}>
+                <span className="thumb-cat">{e.progress >= 100 ? "🎓 수료" : e.progress > 0 ? "▶ 학습 중" : "시작 전"}</span>
               </div>
             </Link>
             <div className="cc-body">

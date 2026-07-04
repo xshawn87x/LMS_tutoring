@@ -777,6 +777,46 @@ export const getSettings = (token: string) => request<TenantSettingsView>("/api/
 export const updateSettings = (token: string, body: Omit<TenantSettingsView, "tenantId">) =>
   request<TenantSettingsView>("/api/settings", token, { method: "PUT", body: JSON.stringify(body) });
 
+// ===== 입시/보습학원 특화: 시험 · 성적 · 학부모 리포트 =====
+export interface Exam { id: string; title: string; subject: string | null; examDate: string; maxScore: number; groupId: string | null; }
+export interface ExamScore { id: string; examId: string; studentSubject: string; score: number; comment: string | null; }
+export interface StudentScore {
+  examId: string; title: string; subject: string | null; examDate: string;
+  score: number; maxScore: number; percent: number; comment: string | null;
+}
+export interface ReportAttendance { present: number; absent: number; late: number; excused: number; total: number; attendanceRate: number; }
+export interface ReportAssignment { submitted: number; graded: number; avgScore: number | null; }
+export interface ReportCourse { enrolled: number; completed: number; avgProgress: number; }
+export interface StudentReport {
+  studentSubject: string; studentName: string | null;
+  scores: StudentScore[]; scoreAvgPercent: number | null; latestPercent: number | null;
+  attendance: ReportAttendance; assignments: ReportAssignment; courses: ReportCourse; generatedAt: string;
+}
+export interface ScoreEntryInput { studentSubject: string; score: number; comment?: string }
+
+// 시험/성적 관리 (INSTRUCTOR/ADMIN)
+export const listExams = (token: string) => request<Exam[]>("/api/exams", token);
+export const createExam = (token: string, body: { title: string; subject?: string; examDate: string; maxScore?: number; groupId?: string | null }) =>
+  request<Exam>("/api/exams", token, { method: "POST", body: JSON.stringify(body) });
+export const updateExam = (token: string, id: string, body: { title: string; subject?: string; examDate: string; maxScore?: number; groupId?: string | null }) =>
+  request<Exam>(`/api/exams/${id}`, token, { method: "PUT", body: JSON.stringify(body) });
+export const deleteExam = (token: string, id: string) => request<void>(`/api/exams/${id}`, token, { method: "DELETE" });
+export const examScores = (token: string, id: string) => request<ExamScore[]>(`/api/exams/${id}/scores`, token);
+export const recordScores = (token: string, id: string, entries: ScoreEntryInput[]) =>
+  request<ExamScore[]>(`/api/exams/${id}/scores`, token, { method: "POST", body: JSON.stringify({ entries }) });
+// 내 성적 (학생)
+export const myScores = (token: string) => request<StudentScore[]>("/api/me/scores", token);
+// 학부모 리포트 (강사/관리자 조회·발송)
+export const studentReport = (token: string, student: string) =>
+  request<StudentReport>(`/api/students/${encodeURIComponent(student)}/report`, token);
+export const sendReport = (token: string, student: string) =>
+  request<{ sent: number; parents: string[] }>(`/api/students/${encodeURIComponent(student)}/report/send`, token, { method: "POST" });
+// 자녀 성적·리포트 (학부모)
+export const childScores = (token: string, student: string) =>
+  request<StudentScore[]>(`/api/me/children/${encodeURIComponent(student)}/scores`, token);
+export const childReport = (token: string, student: string) =>
+  request<StudentReport>(`/api/me/children/${encodeURIComponent(student)}/report`, token);
+
 // 난이도 라벨 헬퍼 (UI 공용)
 export const LEVEL_LABELS = ["입문", "초급", "중급", "고급"];
 export const levelLabel = (level: number | null | undefined) =>

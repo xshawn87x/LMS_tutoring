@@ -13,7 +13,7 @@ import {
   listCourses,
   listInterestCategories,
 } from "@/lib/api";
-import { courseEmoji, thumbStyle } from "@/lib/thumb";
+import { courseEmoji, thumbBg } from "@/lib/thumb";
 
 export default function CoursesPage() {
   const { session } = useSession();
@@ -132,7 +132,9 @@ export default function CoursesPage() {
             <div className="course-grid">
               {visible.map((c) => (
                 <Link className="course-card" href={`/courses/${c.id}`} key={c.id}>
-                  <div className="course-thumb" style={thumbStyle(c.title)}>{courseEmoji(c.categoryCode)}</div>
+                  <div className="course-thumb" style={thumbBg(c.title)}>
+                    {c.categoryCode && <span className="thumb-cat">{courseEmoji(c.categoryCode)} {categoryName(c.categoryCode)}</span>}
+                  </div>
                   <div className="cc-body">
                     <span className="cc-title">{c.title}</span>
                     <span className="cc-desc">{c.description ?? "설명이 없습니다."}</span>

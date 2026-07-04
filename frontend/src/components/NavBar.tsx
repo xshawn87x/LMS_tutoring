@@ -54,6 +54,7 @@ export function NavBar() {
         // 운영 포털 메뉴 (강사·관리자). 강사=교육 도구만, 관리자=교육+학원운영 전체.
         <span className="links">
           <Link href="/manage">대시보드</Link>
+          <Link href="/manage/exams">시험·성적</Link>
           <Link href="/manage/groups">반·출석</Link>
           <Link href="/me/notifications" title="알림">🔔{unread > 0 && <span className="pf-pill issued" style={{ marginLeft: 2, padding: "0 6px", fontSize: 11 }}>{unread}</span>}</Link>
           {isAdmin && <Link href="/manage/members">회원</Link>}

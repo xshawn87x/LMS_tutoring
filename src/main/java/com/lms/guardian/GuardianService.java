@@ -12,6 +12,10 @@ import com.lms.error.BadRequestException;
 import com.lms.error.ConflictException;
 import com.lms.error.ForbiddenException;
 import com.lms.error.NotFoundException;
+import com.lms.exam.ExamService;
+import com.lms.exam.dto.ExamDtos.StudentScore;
+import com.lms.report.ReportService;
+import com.lms.report.dto.ReportDtos.StudentReport;
 import com.lms.security.Roles;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,15 +36,19 @@ public class GuardianService {
     private final AttendanceService attendanceService;
     private final CounselingService counselingService;
     private final AppUserRepository userRepository;
+    private final ExamService examService;
+    private final ReportService reportService;
 
     public GuardianService(GuardianLinkRepository repository, EnrollmentService enrollmentService,
                            AttendanceService attendanceService, CounselingService counselingService,
-                           AppUserRepository userRepository) {
+                           AppUserRepository userRepository, ExamService examService, ReportService reportService) {
         this.repository = repository;
         this.enrollmentService = enrollmentService;
         this.attendanceService = attendanceService;
         this.counselingService = counselingService;
         this.userRepository = userRepository;
+        this.examService = examService;
+        this.reportService = reportService;
     }
 
     /** 자녀 요약(이메일 + 표시이름). 학부모 화면에서 이름으로 보이도록. */
@@ -86,6 +94,20 @@ public class GuardianService {
     public List<CounselingRecord> childCounseling(String parentSubject, String studentSubject) {
         String student = requireLinked(parentSubject, studentSubject);
         return counselingService.recordsFor(student);
+    }
+
+    /** 연결된 자녀의 성적 추이. 연결이 없으면 403. */
+    @Transactional(readOnly = true)
+    public List<StudentScore> childScores(String parentSubject, String studentSubject) {
+        String student = requireLinked(parentSubject, studentSubject);
+        return examService.studentScores(student);
+    }
+
+    /** 연결된 자녀의 종합 리포트(성적·출석·과제·진도). 연결이 없으면 403. */
+    @Transactional(readOnly = true)
+    public StudentReport childReport(String parentSubject, String studentSubject) {
+        String student = requireLinked(parentSubject, studentSubject);
+        return reportService.buildReport(student);
     }
 
     /** 부모-자녀 연결을 확인하고, 정규화된 자녀 subject를 반환. 연결 없으면 403. (대소문자 무관) */

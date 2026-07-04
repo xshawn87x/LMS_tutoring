@@ -3,6 +3,8 @@ package com.lms.guardian;
 import com.lms.attendance.dto.AttendanceDtos.AttendanceResponse;
 import com.lms.counseling.CounselingRecord;
 import com.lms.enrollment.dto.EnrollmentResponse;
+import com.lms.exam.dto.ExamDtos.StudentScore;
+import com.lms.report.dto.ReportDtos.StudentReport;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -72,6 +74,22 @@ public class GuardianController {
         static ChildCounselingView from(CounselingRecord r) {
             return new ChildCounselingView(r.getCounselor(), r.getContent(), r.getCreatedAt());
         }
+    }
+
+    /** 자녀의 성적 추이. 연결된 자녀만. */
+    @GetMapping("/api/me/children/{studentSubject}/scores")
+    @PreAuthorize("hasAnyRole('PARENT','ADMIN')")
+    public List<StudentScore> childScores(@PathVariable String studentSubject,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        return service.childScores(jwt.getSubject(), studentSubject);
+    }
+
+    /** 자녀의 종합 리포트(성적·출석·과제·진도). 연결된 자녀만. */
+    @GetMapping("/api/me/children/{studentSubject}/report")
+    @PreAuthorize("hasAnyRole('PARENT','ADMIN')")
+    public StudentReport childReport(@PathVariable String studentSubject,
+                                     @AuthenticationPrincipal Jwt jwt) {
+        return service.childReport(jwt.getSubject(), studentSubject);
     }
 
     // --- 학원 관리자(ADMIN) ---
