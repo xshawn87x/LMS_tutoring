@@ -23,6 +23,9 @@ export default function GradesPage() {
   useEffect(() => { load(); }, [load]);
 
   if (!session) return <p className="notice">세션이 없습니다. <Link href="/login">로그인</Link>하세요.</p>;
+  if (!session.roles.includes("STUDENT") && !session.roles.includes("ADMIN")) {
+    return <div><h1>내 성적</h1><p className="notice">학생 계정의 성적 화면입니다. 자녀 성적은 <Link href="/children">자녀 현황</Link>에서 확인하세요.</p></div>;
+  }
 
   const avg = scores.length ? Math.round(scores.reduce((s, x) => s + x.percent, 0) / scores.length) : null;
   const latest = scores.length ? scores[scores.length - 1].percent : null;

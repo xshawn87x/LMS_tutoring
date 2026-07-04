@@ -798,7 +798,7 @@ export interface ScoreEntryInput { studentSubject: string; score: number; commen
 
 // 성적 기반 반편성
 export interface PlacementBand { minPercent: number; groupId: string; }
-export interface PlacementRecommendation { studentSubject: string; studentName: string | null; avgPercent: number; examCount: number; groupId: string; groupName: string | null; }
+export interface PlacementRecommendation { studentSubject: string; studentName: string | null; avgPercent: number; examCount: number; groupId: string; groupName: string | null; currentGroupId: string | null; currentGroupName: string | null; moved: boolean; }
 export interface PlacementApplyResult { assigned: number; studentsPlaced: number; recommendations: PlacementRecommendation[]; }
 export const recommendPlacement = (token: string, bands: PlacementBand[]) =>
   request<PlacementRecommendation[]>("/api/placement/recommend", token, { method: "POST", body: JSON.stringify({ bands }) });

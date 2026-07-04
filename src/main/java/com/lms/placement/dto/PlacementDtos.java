@@ -16,10 +16,11 @@ public final class PlacementDtos {
     public record PlacementRequest(List<Band> bands) {
     }
 
-    /** 한 학생의 배치 추천 결과. */
+    /** 한 학생의 배치 추천 결과. current*는 현재 소속(밴드 반 중), moved=반 이동 여부. */
     public record Recommendation(
             String studentSubject, String studentName, int avgPercent, int examCount,
-            UUID groupId, String groupName) {
+            UUID groupId, String groupName,
+            UUID currentGroupId, String currentGroupName, boolean moved) {
     }
 
     /** 적용 결과 — 새로 배치한 인원 + 대상 학생 수 + 추천 상세. */

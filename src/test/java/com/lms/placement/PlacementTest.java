@@ -73,6 +73,9 @@ class PlacementTest {
         assertThat(recOf(recs, hi).avgPercent()).isEqualTo(90);
         assertThat(recOf(recs, hi).groupId()).isEqualTo(top.getId());
         assertThat(recOf(recs, lo).groupId()).isEqualTo(base.getId());
+        // 아직 어느 반에도 없으니 신규 배치(이동)
+        assertThat(recOf(recs, hi).currentGroupId()).isNull();
+        assertThat(recOf(recs, hi).moved()).isTrue();
     }
 
     @Test
@@ -92,6 +95,12 @@ class PlacementTest {
         assertThat(groupService.isMember(top.getId(), hi)).isTrue();
         assertThat(groupService.isMember(base.getId(), lo)).isTrue();
         assertThat(groupService.isMember(top.getId(), lo)).isFalse();   // 저성적은 상위반에 없음
+
+        // 이미 배정된 뒤 재추천하면 이동 없음(현재=추천)
+        List<Recommendation> again = placementService.recommend(bands);
+        Recommendation rHi = again.stream().filter(r -> r.studentSubject().equals(hi)).findFirst().orElseThrow();
+        assertThat(rHi.currentGroupId()).isEqualTo(top.getId());
+        assertThat(rHi.moved()).isFalse();
     }
 
     @Test

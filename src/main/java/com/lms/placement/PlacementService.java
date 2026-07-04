@@ -74,11 +74,20 @@ public class PlacementService {
 
         List<Recommendation> out = new ArrayList<>();
         for (Map.Entry<String, double[]> en : agg.entrySet()) {
+            String student = en.getKey();
             int avg = (int) Math.round(en.getValue()[0] / en.getValue()[1]);
             int count = (int) en.getValue()[1];
             Band band = pick(sorted, avg);
-            String name = userRepository.findByEmail(en.getKey()).map(AppUser::getDisplayName).orElse(null);
-            out.add(new Recommendation(en.getKey(), name, avg, count, band.groupId(), groupNames.get(band.groupId())));
+            String name = userRepository.findByEmail(student).map(AppUser::getDisplayName).orElse(null);
+            // 현재 소속(밴드 반 중 첫 번째)
+            UUID curId = null;
+            for (Band b : sorted) {
+                if (groupService.isMember(b.groupId(), student)) { curId = b.groupId(); break; }
+            }
+            String curName = curId == null ? null : groupNames.get(curId);
+            boolean moved = !java.util.Objects.equals(curId, band.groupId());
+            out.add(new Recommendation(student, name, avg, count,
+                    band.groupId(), groupNames.get(band.groupId()), curId, curName, moved));
         }
         out.sort(Comparator.comparingInt(Recommendation::avgPercent).reversed());
         return out;

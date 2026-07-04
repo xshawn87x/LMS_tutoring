@@ -66,10 +66,13 @@ public class ExamService {
     public List<ExamScore> recordScores(UUID examId, List<ScoreEntry> entries) {
         Exam exam = require(examId);
         return entries.stream().map(en -> {
+            String student = en.studentSubject() == null ? "" : en.studentSubject().trim().toLowerCase();
+            if (student.isBlank()) {
+                throw new BadRequestException("학생 이메일을 입력하세요");
+            }
             if (en.score() < 0 || en.score() > exam.getMaxScore()) {
                 throw new BadRequestException("점수는 0~" + exam.getMaxScore() + " 범위여야 합니다: " + en.score());
             }
-            String student = en.studentSubject().trim().toLowerCase();
             return scoreRepository.findByExamIdAndStudentSubject(examId, student)
                     .map(existing -> { existing.update(en.score(), en.comment()); return existing; })
                     .orElseGet(() -> scoreRepository.save(new ExamScore(examId, student, en.score(), en.comment())));

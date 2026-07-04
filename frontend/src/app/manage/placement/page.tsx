@@ -108,19 +108,29 @@ export default function PlacementPage() {
         <div className="card">
           <h3>배치 추천 ({recs.length}명)</h3>
           {recs.length === 0 ? <p className="notice">성적이 입력된 학생이 없습니다. <Link href="/manage/exams">시험·성적</Link>에서 성적을 먼저 입력하세요.</p> : (
+            <>
+            <p className="muted" style={{ marginTop: 0 }}>
+              총 {recs.length}명 · 이동 {recs.filter((r) => r.moved).length}명 · 유지 {recs.filter((r) => !r.moved).length}명
+            </p>
             <table className="grid">
-              <thead><tr><th>학생</th><th style={{ textAlign: "right" }}>평균</th><th style={{ textAlign: "right" }}>응시</th><th>배정 반</th></tr></thead>
+              <thead><tr><th>학생</th><th style={{ textAlign: "right" }}>평균</th><th style={{ textAlign: "right" }}>응시</th><th>현재 → 추천</th></tr></thead>
               <tbody>
                 {recs.map((r) => (
                   <tr key={r.studentSubject}>
                     <td>{r.studentName ?? r.studentSubject}</td>
                     <td style={{ textAlign: "right", fontWeight: 700 }}>{r.avgPercent}%</td>
                     <td style={{ textAlign: "right" }}>{r.examCount}</td>
-                    <td><span className="badge role">{r.groupName ?? groupName(r.groupId)}</span></td>
+                    <td>
+                      <span className="muted">{r.currentGroupName ?? "미배정"}</span>
+                      {" → "}
+                      <span className="badge role">{r.groupName ?? groupName(r.groupId)}</span>
+                      {r.moved && <span className="pf-pill issued" style={{ marginLeft: 6, fontSize: 11 }}>이동</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </>
           )}
         </div>
       )}

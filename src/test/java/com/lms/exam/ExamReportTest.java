@@ -102,6 +102,14 @@ class ExamReportTest {
     }
 
     @Test
+    void 빈_학생이메일_성적은_거부된다() {
+        TenantContext.set(TENANT_A);
+        UUID exam = examService.create(new ExamRequest("쪽지", "국어", LocalDate.of(2026, 5, 3), 100, null)).getId();
+        assertThatThrownBy(() -> examService.recordScores(exam, List.of(new ScoreEntry("  ", 50, null))))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     void 리포트는_성적과_수강을_집계한다() {
         TenantContext.set(TENANT_A);
         AppUser student = account("stu", "STUDENT");

@@ -7,10 +7,13 @@ import { useToast } from "@/components/ToastProvider";
 import {
   Exam,
   ScoreEntryInput,
+  StudentGroup,
   createExam,
   deleteExam,
   examScores,
   listExams,
+  listGroupMembers,
+  listGroups,
   recordScores,
   sendReport,
 } from "@/lib/api";
@@ -21,6 +24,7 @@ export default function ExamsAdminPage() {
   const { session } = useSession();
   const { showToast } = useToast();
   const [exams, setExams] = useState<Exam[]>([]);
+  const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [selected, setSelected] = useState<Exam | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +35,37 @@ export default function ExamsAdminPage() {
   const [subject, setSubject] = useState("");
   const [examDate, setExamDate] = useState("");
   const [maxScore, setMaxScore] = useState("100");
+  const [groupId, setGroupId] = useState("");
 
   const loadExams = useCallback(async () => {
     if (!session) return;
-    try { setExams(await listExams(session.token)); }
+    try {
+      setExams(await listExams(session.token));
+      setGroups(await listGroups(session.token));
+    }
     catch (e) { setError(e instanceof Error ? e.message : "불러오기 실패"); }
   }, [session]);
 
   useEffect(() => { loadExams(); }, [loadExams]);
+
+  const groupName = (id: string | null) => id ? (groups.find((g) => g.id === id)?.name ?? "반") : null;
+
+  // 시험에 연결된 반의 학생을 성적 입력표로 불러온다(기존 입력은 유지, 없는 학생만 추가).
+  const loadRoster = async () => {
+    if (!session || !selected?.groupId) return;
+    try {
+      const members = await listGroupMembers(session.token, selected.groupId);
+      setRows((rs) => {
+        const have = new Set(rs.map((r) => r.studentSubject.trim().toLowerCase()).filter(Boolean));
+        const added = members
+          .filter((m) => !have.has(m.studentSubject.toLowerCase()))
+          .map((m) => ({ studentSubject: m.studentSubject, score: "", comment: "" }));
+        const base = rs.filter((r) => r.studentSubject.trim());
+        return [...base, ...added].length ? [...base, ...added] : [{ studentSubject: "", score: "", comment: "" }];
+      });
+      showToast(`${members.length}명의 명단을 불러왔습니다`);
+    } catch (e) { setError(e instanceof Error ? e.message : "명단 불러오기 실패"); }
+  };
 
   const openExam = async (ex: Exam) => {
     setSelected(ex); setError(null);
@@ -60,9 +87,9 @@ export default function ExamsAdminPage() {
     if (!title.trim() || !examDate) { setError("시험명과 시행일을 입력하세요"); return; }
     setBusy(true); setError(null);
     try {
-      await createExam(session.token, { title, subject: subject || undefined, examDate, maxScore: Number(maxScore) || 100 });
+      await createExam(session.token, { title, subject: subject || undefined, examDate, maxScore: Number(maxScore) || 100, groupId: groupId || null });
       showToast("시험을 만들었습니다");
-      setTitle(""); setSubject(""); setExamDate(""); setMaxScore("100");
+      setTitle(""); setSubject(""); setExamDate(""); setMaxScore("100"); setGroupId("");
       await loadExams();
     } catch (e) { setError(e instanceof Error ? e.message : "생성 실패"); }
     finally { setBusy(false); }
@@ -126,19 +153,25 @@ export default function ExamsAdminPage() {
             <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} /></div>
           <div style={{ minWidth: 90 }}><label>만점</label>
             <input type="number" value={maxScore} onChange={(e) => setMaxScore(e.target.value)} /></div>
+          <div style={{ minWidth: 130 }}><label>대상 반 (선택)</label>
+            <select value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+              <option value="">— 전체 —</option>
+              {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select></div>
           <button onClick={onCreate} disabled={busy}>시험 추가</button>
         </div>
+        {groups.length === 0 && <p className="muted" style={{ marginBottom: 0 }}>반을 지정하면 성적 입력 시 <Link href="/manage/groups">반 명단</Link>을 불러올 수 있습니다.</p>}
       </div>
 
       <div className="card">
         <h3>시험 목록 ({exams.length})</h3>
         {exams.length === 0 ? <p className="notice">아직 시험이 없습니다.</p> : (
           <table className="grid">
-            <thead><tr><th>시행일</th><th>시험</th><th>과목</th><th>만점</th><th style={{ textAlign: "right" }}>작업</th></tr></thead>
+            <thead><tr><th>시행일</th><th>시험</th><th>과목</th><th>대상 반</th><th>만점</th><th style={{ textAlign: "right" }}>작업</th></tr></thead>
             <tbody>
               {exams.map((ex) => (
                 <tr key={ex.id} style={selected?.id === ex.id ? { background: "var(--panel-2)" } : undefined}>
-                  <td>{ex.examDate}</td><td>{ex.title}</td><td>{ex.subject ?? "—"}</td><td>{ex.maxScore}</td>
+                  <td>{ex.examDate}</td><td>{ex.title}</td><td>{ex.subject ?? "—"}</td><td>{groupName(ex.groupId) ?? "전체"}</td><td>{ex.maxScore}</td>
                   <td style={{ textAlign: "right" }}>
                     <button className="ghost" onClick={() => openExam(ex)}>성적 입력</button>
                     <button className="ghost" onClick={() => onDeleteExam(ex)}>삭제</button>
@@ -152,7 +185,10 @@ export default function ExamsAdminPage() {
 
       {selected && (
         <div className="card">
-          <h3>성적 입력 — {selected.title} <span className="muted">(만점 {selected.maxScore})</span></h3>
+          <h3>성적 입력 — {selected.title} <span className="muted">(만점 {selected.maxScore}{selected.groupId ? ` · ${groupName(selected.groupId)}` : ""})</span></h3>
+          {selected.groupId && (
+            <button className="ghost" onClick={loadRoster} style={{ marginBottom: 10 }}>👥 반 학생 명단 불러오기</button>
+          )}
           <table className="grid">
             <thead><tr><th>학생 이메일</th><th style={{ width: 90 }}>점수</th><th>메모</th><th style={{ textAlign: "right" }}>리포트</th></tr></thead>
             <tbody>

@@ -62,8 +62,8 @@ app:
     dir: ${LMS_UPLOAD_DIR:uploads}
 
 # 플랫폼(SaaS 제공자) 슈퍼관리자 — 요금제/자격을 테넌트 경계 넘어 관리하는 부트스트랩 계정.
-# 로컬 기본값이며, 운영에서는 반드시 환경변수/시크릿으로 강한 값을 주입할 것.
+# 로컬 기본값은 간단히 super/1. 운영에서는 반드시 환경변수/시크릿으로 강한 값을 주입할 것.
 platform:
   admin:
-    email: ${LMS_PLATFORM_ADMIN_EMAIL:root@platform.local}
-    password: ${LMS_PLATFORM_ADMIN_PASSWORD:platform-admin-pw}
+    email: ${LMS_PLATFORM_ADMIN_EMAIL:super}
+    password: ${LMS_PLATFORM_ADMIN_PASSWORD:1}

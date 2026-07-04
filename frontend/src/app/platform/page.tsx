@@ -46,8 +46,8 @@ export default function PlatformConsole() {
   const [token, setToken] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // 로그인 폼
-  const [email, setEmail] = useState("root@platform.local");
+  // 로그인 폼 (로컬 기본 계정 super/1 프리필)
+  const [email, setEmail] = useState("super");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -312,8 +312,9 @@ export default function PlatformConsole() {
         </p>
         <div className="card">
           <h3>슈퍼관리자 로그인</h3>
-          <label>이메일</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="root@platform.local" />
+          <label>아이디</label>
+          <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="super"
+            onKeyDown={(e) => e.key === "Enter" && onLogin()} />
           <label>비밀번호</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
             onKeyDown={(e) => e.key === "Enter" && onLogin()} />
@@ -322,7 +323,7 @@ export default function PlatformConsole() {
             <button onClick={onLogin} disabled={busy}>{busy ? "확인 중…" : "로그인"}</button>
           </div>
           <p className="muted" style={{ marginTop: 12, marginBottom: 0 }}>
-            로컬 기본 계정: <code>root@platform.local</code> / <code>platform-admin-pw</code>
+            로컬 기본 계정: <code>super</code> / <code>1</code>
           </p>
         </div>
       </div>
