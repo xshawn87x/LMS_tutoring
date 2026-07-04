@@ -1,0 +1,25 @@
+# Git / IDE
+.git
+.github
+.vscode
+.idea
+
+# Gradle / 빌드 산출물 (이미지 안에서 새로 빌드)
+.gradle
+build
+bin
+gradle.properties        # 로컬 Avast 트러스트스토어 설정 — 컨테이너에선 불필요/유해
+
+# 로컬 트러스트스토어·인증서 (머신 전용)
+.certs
+avast-root.cer
+
+# 프론트엔드 (별도 이미지에서 빌드)
+frontend
+
+# 로그 / 업로드 / 임시
+*.log
+uploads
+
+# Claude 로컬 설정
+.claude

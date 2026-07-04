@@ -17,5 +17,47 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lms-backend
+    container_name: lms-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # 컨테이너 네트워크에서는 localhost 대신 서비스명(postgres)으로 접속.
+      # application.yml 값을 Spring 완화 바인딩(relaxed binding)으로 덮어쓴다.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: lms_app
+      SPRING_DATASOURCE_PASSWORD: lms_app_pw
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_FLYWAY_USER: lms_owner
+      SPRING_FLYWAY_PASSWORD: lms_owner_pw
+      LMS_UPLOAD_DIR: /app/uploads
+      LMS_JWT_SECRET: ${LMS_JWT_SECRET:-dev-only-secret-change-me-please-32bytes-minimum!!}
+      # AI 콘텐츠 분석(선택) — 호스트 환경변수에 있으면 전달, 없으면 휴리스틱 분석기 사용.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - lms-uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # 브라우저에서 호출하는 백엔드 주소 (호스트 기준). 빌드 시점에 번들에 박힘.
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8080}
+    image: lms-frontend
+    container_name: lms-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
 volumes:
   lms-pgdata:
+  lms-uploads:
