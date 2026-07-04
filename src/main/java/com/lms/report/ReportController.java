@@ -2,6 +2,7 @@ package com.lms.report;
 
 import com.lms.guardian.GuardianLink;
 import com.lms.guardian.GuardianLinkRepository;
+import com.lms.notification.NotificationChannel;
 import com.lms.notification.NotificationService;
 import com.lms.report.dto.ReportDtos.StudentReport;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,20 +38,24 @@ public class ReportController {
         return reportService.buildReport(student);
     }
 
-    /** 리포트를 연결된 학부모에게 발송(인앱 알림). 실제 이메일/문자는 MessageSender 교체로 확장. */
+    /** 리포트를 연결된 학부모에게 발송 — 인앱 알림 + 이메일(SMTP 설정 시 실전송, 미설정 시 SIMULATED). */
     @PostMapping("/api/students/{student}/report/send")
     @PreAuthorize("hasAnyRole('INSTRUCTOR','ADMIN')")
     public SendResult send(@PathVariable String student) {
         StudentReport report = reportService.buildReport(student);
         List<String> parents = guardianLinkRepository.findByStudentSubject(student.trim().toLowerCase())
                 .stream().map(GuardianLink::getParentSubject).distinct().toList();
+        String title = "자녀 성적 리포트가 도착했습니다";
         String body = reportService.summaryText(report);
+        String emailStatus = parents.isEmpty() ? "NONE" : "SIMULATED";
         for (String parent : parents) {
-            notificationService.notify(parent, "자녀 성적 리포트가 도착했습니다", body);
+            notificationService.notify(parent, title, body);                                  // 인앱(항상 동작)
+            emailStatus = notificationService.dispatch(parent, title, body, NotificationChannel.EMAIL); // 이메일
         }
-        return new SendResult(parents.size(), parents);
+        return new SendResult(parents.size(), parents, emailStatus);
     }
 
-    public record SendResult(int sent, List<String> parents) {
+    /** emailStatus: SENT(실발송) | SIMULATED(SMTP 미설정) | FAILED | NONE(대상 없음) */
+    public record SendResult(int sent, List<String> parents, String emailStatus) {
     }
 }

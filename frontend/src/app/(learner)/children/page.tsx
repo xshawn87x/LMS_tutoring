@@ -6,6 +6,8 @@ import { useSession } from "@/components/SessionProvider";
 import { ScoreTrendChart } from "@/components/ScoreTrendChart";
 import { ChildInfo, StudentReport, childReport, myChildren } from "@/lib/api";
 
+const ATT_LABEL: Record<string, string> = { PRESENT: "출석", ABSENT: "결석", LATE: "지각", EXCUSED: "공결" };
+
 export default function ChildrenPage() {
   const { session } = useSession();
   const [children, setChildren] = useState<ChildInfo[]>([]);
@@ -102,6 +104,20 @@ export default function ChildrenPage() {
                 <p className="muted" style={{ marginTop: 0 }}>
                   출석 {report.attendance.total}일 중 출석 {report.attendance.present} · 지각 {report.attendance.late} · 결석 {report.attendance.absent} · 공결 {report.attendance.excused}
                 </p>
+                {report.recentAttendance.length > 0 && (
+                  <table className="grid" style={{ marginTop: 4, marginBottom: 12 }}>
+                    <thead><tr><th>날짜</th><th>상태</th><th>메모</th></tr></thead>
+                    <tbody>
+                      {report.recentAttendance.map((a, i) => (
+                        <tr key={i}>
+                          <td>{a.date}</td>
+                          <td>{ATT_LABEL[a.status] ?? a.status}</td>
+                          <td className="muted">{a.note ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
                 <p className="muted" style={{ marginBottom: 0 }}>
                   과제 {report.assignments.submitted}건 제출 · {report.assignments.graded}건 채점
                   {report.assignments.avgScore != null && ` · 평균 ${report.assignments.avgScore}점`}

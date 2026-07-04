@@ -12,6 +12,7 @@ import com.lms.enrollment.EnrollmentStatus;
 import com.lms.exam.ExamService;
 import com.lms.exam.dto.ExamDtos.StudentScore;
 import com.lms.report.dto.ReportDtos.AssignmentSummary;
+import com.lms.report.dto.ReportDtos.AttendanceEntry;
 import com.lms.report.dto.ReportDtos.AttendanceSummary;
 import com.lms.report.dto.ReportDtos.CourseSummary;
 import com.lms.report.dto.ReportDtos.StudentReport;
@@ -54,11 +55,15 @@ public class ReportService {
                 : (int) Math.round(scores.stream().mapToInt(StudentScore::percent).average().orElse(0));
         Integer latest = scores.isEmpty() ? null : scores.get(scores.size() - 1).percent(); // 시행일 오름차순
 
-        AttendanceSummary att = summarizeAttendance(attendanceService.forStudent(student));
+        List<Attendance> attList = attendanceService.forStudent(student); // 최신순
+        AttendanceSummary att = summarizeAttendance(attList);
+        List<AttendanceEntry> recent = attList.stream().limit(10)
+                .map(a -> new AttendanceEntry(a.getAttDate(), a.getStatus().name(), a.getNote()))
+                .toList();
         AssignmentSummary asg = summarizeAssignments(submissionRepository.findByStudent(student));
         CourseSummary crs = summarizeCourses(enrollmentService.listMine(student));
 
-        return new StudentReport(student, name, scores, scoreAvg, latest, att, asg, crs, OffsetDateTime.now());
+        return new StudentReport(student, name, scores, scoreAvg, latest, att, recent, asg, crs, OffsetDateTime.now());
     }
 
     /** 리포트 발송 알림에 담을 한 줄 요약. */

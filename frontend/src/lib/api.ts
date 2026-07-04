@@ -785,14 +785,25 @@ export interface StudentScore {
   score: number; maxScore: number; percent: number; comment: string | null;
 }
 export interface ReportAttendance { present: number; absent: number; late: number; excused: number; total: number; attendanceRate: number; }
+export interface AttendanceEntry { date: string; status: string; note: string | null; }
 export interface ReportAssignment { submitted: number; graded: number; avgScore: number | null; }
 export interface ReportCourse { enrolled: number; completed: number; avgProgress: number; }
 export interface StudentReport {
   studentSubject: string; studentName: string | null;
   scores: StudentScore[]; scoreAvgPercent: number | null; latestPercent: number | null;
-  attendance: ReportAttendance; assignments: ReportAssignment; courses: ReportCourse; generatedAt: string;
+  attendance: ReportAttendance; recentAttendance: AttendanceEntry[];
+  assignments: ReportAssignment; courses: ReportCourse; generatedAt: string;
 }
 export interface ScoreEntryInput { studentSubject: string; score: number; comment?: string }
+
+// 성적 기반 반편성
+export interface PlacementBand { minPercent: number; groupId: string; }
+export interface PlacementRecommendation { studentSubject: string; studentName: string | null; avgPercent: number; examCount: number; groupId: string; groupName: string | null; }
+export interface PlacementApplyResult { assigned: number; studentsPlaced: number; recommendations: PlacementRecommendation[]; }
+export const recommendPlacement = (token: string, bands: PlacementBand[]) =>
+  request<PlacementRecommendation[]>("/api/placement/recommend", token, { method: "POST", body: JSON.stringify({ bands }) });
+export const applyPlacement = (token: string, bands: PlacementBand[]) =>
+  request<PlacementApplyResult>("/api/placement/apply", token, { method: "POST", body: JSON.stringify({ bands }) });
 
 // 시험/성적 관리 (INSTRUCTOR/ADMIN)
 export const listExams = (token: string) => request<Exam[]>("/api/exams", token);
@@ -810,7 +821,7 @@ export const myScores = (token: string) => request<StudentScore[]>("/api/me/scor
 export const studentReport = (token: string, student: string) =>
   request<StudentReport>(`/api/students/${encodeURIComponent(student)}/report`, token);
 export const sendReport = (token: string, student: string) =>
-  request<{ sent: number; parents: string[] }>(`/api/students/${encodeURIComponent(student)}/report/send`, token, { method: "POST" });
+  request<{ sent: number; parents: string[]; emailStatus: string }>(`/api/students/${encodeURIComponent(student)}/report/send`, token, { method: "POST" });
 // 자녀 성적·리포트 (학부모)
 export const childScores = (token: string, student: string) =>
   request<StudentScore[]>(`/api/me/children/${encodeURIComponent(student)}/scores`, token);

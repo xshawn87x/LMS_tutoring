@@ -25,6 +25,9 @@ dependencies {
     // 요청 검증 (@Valid / @NotBlank)
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // 이메일 발송 (학부모 리포트 실발송) — SMTP는 spring.mail.* 환경변수로 주입, 미설정 시 SIMULATED
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // 운영 관측성 (health / info / metrics)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

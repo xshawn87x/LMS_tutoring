@@ -96,11 +96,16 @@ export default function ExamsAdminPage() {
     finally { setBusy(false); }
   };
 
+  const emailLabel = (s: string) =>
+    s === "SENT" ? "이메일 전송됨" : s === "SIMULATED" ? "이메일 미설정(인앱만)" : s === "FAILED" ? "이메일 실패" : "";
+
   const onSendReport = async (student: string) => {
     if (!student.trim()) return;
     try {
       const res = await sendReport(session.token, student.trim());
-      showToast(res.sent > 0 ? `학부모 ${res.sent}명에게 리포트를 발송했습니다` : "연결된 학부모가 없습니다");
+      showToast(res.sent > 0
+        ? `학부모 ${res.sent}명에게 리포트 발송 · ${emailLabel(res.emailStatus)}`
+        : "연결된 학부모가 없습니다");
     } catch (e) { setError(e instanceof Error ? e.message : "발송 실패"); }
   };
 

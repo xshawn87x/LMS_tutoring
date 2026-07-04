@@ -3,7 +3,6 @@ import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
 import { FeaturesProvider } from "@/components/FeaturesProvider";
 import { ToastProvider } from "@/components/ToastProvider";
-import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "LMS",
@@ -24,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <FeaturesProvider>
             <ToastProvider>
-              <AppShell>{children}</AppShell>
+              {children}
             </ToastProvider>
           </FeaturesProvider>
         </SessionProvider>

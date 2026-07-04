@@ -69,6 +69,11 @@ public class GroupService {
         return memberRepository.findByGroupId(groupId);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isMember(UUID groupId, String studentSubject) {
+        return memberRepository.existsByGroupIdAndStudentSubject(groupId, studentSubject.trim().toLowerCase());
+    }
+
     public GroupMember addMember(UUID groupId, String studentSubject) {
         require(groupId);
         String s = studentSubject.trim().toLowerCase();

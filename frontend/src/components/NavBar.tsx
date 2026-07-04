@@ -55,6 +55,7 @@ export function NavBar() {
         <span className="links">
           <Link href="/manage">대시보드</Link>
           <Link href="/manage/exams">시험·성적</Link>
+          <Link href="/manage/placement">반편성</Link>
           <Link href="/manage/groups">반·출석</Link>
           <Link href="/me/notifications" title="알림">🔔{unread > 0 && <span className="pf-pill issued" style={{ marginLeft: 2, padding: "0 6px", fontSize: 11 }}>{unread}</span>}</Link>
           {isAdmin && <Link href="/manage/members">회원</Link>}
