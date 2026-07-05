@@ -60,7 +60,8 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 회원가입/로그인 + 플랫폼 슈퍼관리자 로그인 + dev 토큰 + 헬스체크 + API 문서 + 업로드 영상 제공은 공개
-                        .requestMatchers("/api/auth/**", "/api/platform/login", "/dev/**", "/actuator/**", "/media/**",
+                        .requestMatchers("/api/auth/**", "/api/onboarding/**", "/api/platform/login", "/dev/**",
+                                "/actuator/**", "/media/**",
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())))

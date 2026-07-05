@@ -51,14 +51,14 @@ export default function GradesPage() {
           </div>
 
           <div className="card">
-            <h3>성적 추이</h3>
-            <ScoreTrendChart data={scores.map((s) => ({ date: s.examDate, percent: s.percent, label: `${s.title}${s.subject ? " · " + s.subject : ""}` }))} />
+            <h3>성적 추이 <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>(과목별)</span></h3>
+            <ScoreTrendChart data={scores.map((s) => ({ date: s.examDate, percent: s.percent, label: s.title, series: s.subject }))} />
           </div>
 
           <div className="card">
             <h3>시험별 성적</h3>
             <table className="grid">
-              <thead><tr><th>시행일</th><th>시험</th><th>과목</th><th style={{ textAlign: "right" }}>점수</th><th style={{ textAlign: "right" }}>백분율</th></tr></thead>
+              <thead><tr><th>시행일</th><th>시험</th><th>과목</th><th style={{ textAlign: "right" }}>점수</th><th style={{ textAlign: "right" }}>백분율</th><th style={{ textAlign: "right" }}>석차</th></tr></thead>
               <tbody>
                 {[...scores].reverse().map((s) => (
                   <tr key={s.examId}>
@@ -67,6 +67,7 @@ export default function GradesPage() {
                     <td>{s.subject ?? "—"}</td>
                     <td style={{ textAlign: "right" }}>{s.score} / {s.maxScore}</td>
                     <td style={{ textAlign: "right", fontWeight: 700 }}>{s.percent}%</td>
+                    <td style={{ textAlign: "right" }}>{s.rank}/{s.totalTakers} <span className="muted">(상위 {s.topPercent}%)</span></td>
                   </tr>
                 ))}
               </tbody>

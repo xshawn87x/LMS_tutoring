@@ -110,6 +110,27 @@ class ExamReportTest {
     }
 
     @Test
+    void 석차와_백분위를_계산한다() {
+        TenantContext.set(TENANT_A);
+        long n = System.nanoTime();
+        String a = "ra" + n + "@acme", b = "rb" + n + "@acme", c = "rc" + n + "@acme";
+        UUID exam = examService.create(new ExamRequest("기말고사", "수학", LocalDate.of(2026, 7, 1), 100, null)).getId();
+        examService.recordScores(exam, List.of(
+                new ScoreEntry(a, 95, null), new ScoreEntry(b, 80, null), new ScoreEntry(c, 60, null)));
+
+        var top = examService.studentScores(a).get(0);
+        assertThat(top.rank()).isEqualTo(1);
+        assertThat(top.totalTakers()).isEqualTo(3);
+        assertThat(top.topPercent()).isEqualTo(34);   // ceil(1/3*100)
+        assertThat(examService.studentScores(b).get(0).rank()).isEqualTo(2);
+
+        var ranking = examService.ranking(exam);
+        assertThat(ranking.get(0).studentSubject()).isEqualTo(a);
+        assertThat(ranking.get(0).rank()).isEqualTo(1);
+        assertThat(ranking.get(2).rank()).isEqualTo(3);
+    }
+
+    @Test
     void 리포트는_성적과_수강을_집계한다() {
         TenantContext.set(TENANT_A);
         AppUser student = account("stu", "STUDENT");

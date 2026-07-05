@@ -1,13 +1,17 @@
 package com.lms.exam;
 
+import com.lms.auth.AppUser;
+import com.lms.auth.AppUserRepository;
 import com.lms.error.BadRequestException;
 import com.lms.error.NotFoundException;
+import com.lms.exam.dto.ExamDtos.ExamRanking;
 import com.lms.exam.dto.ExamDtos.ExamRequest;
 import com.lms.exam.dto.ExamDtos.ScoreEntry;
 import com.lms.exam.dto.ExamDtos.StudentScore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +29,22 @@ public class ExamService {
 
     private final ExamRepository examRepository;
     private final ExamScoreRepository scoreRepository;
+    private final AppUserRepository userRepository;
 
-    public ExamService(ExamRepository examRepository, ExamScoreRepository scoreRepository) {
+    public ExamService(ExamRepository examRepository, ExamScoreRepository scoreRepository,
+                       AppUserRepository userRepository) {
         this.examRepository = examRepository;
         this.scoreRepository = scoreRepository;
+        this.userRepository = userRepository;
+    }
+
+    /** 한 시험 점수 목록에서 특정 점수의 석차(1-based, 동점은 같은 등수) + 상위 백분율. */
+    private static int[] rankOf(List<Integer> allScores, int myScore) {
+        int total = allScores.size();
+        int higher = (int) allScores.stream().filter(s -> s > myScore).count();
+        int rank = higher + 1;
+        int topPercent = total == 0 ? 0 : (int) Math.ceil(rank * 100.0 / total);
+        return new int[] { rank, total, topPercent };
     }
 
     // --- 시험 ---
@@ -85,7 +101,7 @@ public class ExamService {
         return scoreRepository.findByExamId(examId);
     }
 
-    /** 학생 본인/자녀의 성적을 시험 정보와 함께, 시행일 오름차순으로(추이 그래프용). */
+    /** 학생 본인/자녀의 성적을 시험 정보·석차와 함께, 시행일 오름차순으로(추이 그래프용). */
     @Transactional(readOnly = true)
     public List<StudentScore> studentScores(String studentSubject) {
         List<ExamScore> scores = scoreRepository.findByStudentSubject(studentSubject.trim().toLowerCase());
@@ -93,17 +109,40 @@ public class ExamService {
         Map<UUID, Exam> exams = examRepository.findAllById(
                         scores.stream().map(ExamScore::getExamId).distinct().toList()).stream()
                 .collect(Collectors.toMap(Exam::getId, Function.identity()));
+        // 시험별 전체 점수(석차 계산용)를 한 번씩만 로드
+        Map<UUID, List<Integer>> allByExam = new java.util.HashMap<>();
+        for (UUID examId : exams.keySet()) {
+            allByExam.put(examId, scoreRepository.findByExamId(examId).stream().map(ExamScore::getScore).toList());
+        }
         return scores.stream()
                 .map(s -> {
                     Exam e = exams.get(s.getExamId());
                     if (e == null) return null;   // 시험이 삭제된 경우(CASCADE로 보통 없음) 방어
                     int percent = (int) Math.round(s.getScore() * 100.0 / e.getMaxScore());
+                    int[] r = rankOf(allByExam.getOrDefault(e.getId(), List.of()), s.getScore());
                     return new StudentScore(e.getId(), e.getTitle(), e.getSubject(), e.getExamDate(),
-                            s.getScore(), e.getMaxScore(), percent, s.getComment());
+                            s.getScore(), e.getMaxScore(), percent, s.getComment(), r[0], r[1], r[2]);
                 })
                 .filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparing(StudentScore::examDate))
                 .toList();
+    }
+
+    /** 한 시험의 석차표 — 점수 내림차순, 석차·상위 백분율·이름 포함. */
+    @Transactional(readOnly = true)
+    public List<ExamRanking> ranking(UUID examId) {
+        Exam exam = require(examId);
+        List<ExamScore> scores = scoreRepository.findByExamId(examId);
+        List<Integer> all = scores.stream().map(ExamScore::getScore).toList();
+        List<ExamRanking> out = new ArrayList<>();
+        for (ExamScore s : scores) {
+            int percent = (int) Math.round(s.getScore() * 100.0 / exam.getMaxScore());
+            int[] r = rankOf(all, s.getScore());
+            String name = userRepository.findByEmail(s.getStudentSubject()).map(AppUser::getDisplayName).orElse(null);
+            out.add(new ExamRanking(s.getStudentSubject(), name, s.getScore(), percent, r[0], r[1], r[2]));
+        }
+        out.sort(Comparator.comparingInt(ExamRanking::score).reversed());
+        return out;
     }
 
     // --- 헬퍼 ---

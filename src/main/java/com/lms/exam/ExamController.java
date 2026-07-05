@@ -1,5 +1,6 @@
 package com.lms.exam;
 
+import com.lms.exam.dto.ExamDtos.ExamRanking;
 import com.lms.exam.dto.ExamDtos.ExamRequest;
 import com.lms.exam.dto.ExamDtos.ExamResponse;
 import com.lms.exam.dto.ExamDtos.RecordScoresRequest;
@@ -74,6 +75,13 @@ public class ExamController {
     @PreAuthorize("hasAnyRole('INSTRUCTOR','ADMIN')")
     public List<ScoreResponse> recordScores(@PathVariable UUID id, @RequestBody RecordScoresRequest req) {
         return service.recordScores(id, req.entries()).stream().map(ScoreResponse::from).toList();
+    }
+
+    /** 한 시험의 석차표 (점수 내림차순 + 석차·상위%). */
+    @GetMapping("/api/exams/{id}/ranking")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR','ADMIN')")
+    public List<ExamRanking> ranking(@PathVariable UUID id) {
+        return service.ranking(id);
     }
 
     // --- 내 성적 (학생 본인) ---

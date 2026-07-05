@@ -783,6 +783,11 @@ export interface ExamScore { id: string; examId: string; studentSubject: string;
 export interface StudentScore {
   examId: string; title: string; subject: string | null; examDate: string;
   score: number; maxScore: number; percent: number; comment: string | null;
+  rank: number; totalTakers: number; topPercent: number;
+}
+export interface ExamRanking {
+  studentSubject: string; studentName: string | null; score: number; percent: number;
+  rank: number; totalTakers: number; topPercent: number;
 }
 export interface ReportAttendance { present: number; absent: number; late: number; excused: number; total: number; attendanceRate: number; }
 export interface AttendanceEntry { date: string; status: string; note: string | null; }
@@ -815,6 +820,7 @@ export const deleteExam = (token: string, id: string) => request<void>(`/api/exa
 export const examScores = (token: string, id: string) => request<ExamScore[]>(`/api/exams/${id}/scores`, token);
 export const recordScores = (token: string, id: string, entries: ScoreEntryInput[]) =>
   request<ExamScore[]>(`/api/exams/${id}/scores`, token, { method: "POST", body: JSON.stringify({ entries }) });
+export const examRanking = (token: string, id: string) => request<ExamRanking[]>(`/api/exams/${id}/ranking`, token);
 // 내 성적 (학생)
 export const myScores = (token: string) => request<StudentScore[]>("/api/me/scores", token);
 // 학부모 리포트 (강사/관리자 조회·발송)
@@ -822,6 +828,12 @@ export const studentReport = (token: string, student: string) =>
   request<StudentReport>(`/api/students/${encodeURIComponent(student)}/report`, token);
 export const sendReport = (token: string, student: string) =>
   request<{ sent: number; parents: string[]; emailStatus: string }>(`/api/students/${encodeURIComponent(student)}/report/send`, token, { method: "POST" });
+export const sendAllReports = (token: string) =>
+  request<{ students: number; notified: number }>("/api/reports/send-all", token, { method: "POST" });
+
+// 학원(기관) 자가 개설 — 공개. 성공 시 관리자 자동 로그인 토큰(AuthResponse) 반환.
+export const academySignup = (body: { orgCode: string; academyName: string; adminEmail: string; adminPassword: string; adminName?: string }) =>
+  request<AuthResponse>("/api/onboarding/academy", null, { method: "POST", body: JSON.stringify(body) });
 // 자녀 성적·리포트 (학부모)
 export const childScores = (token: string, student: string) =>
   request<StudentScore[]>(`/api/me/children/${encodeURIComponent(student)}/scores`, token);

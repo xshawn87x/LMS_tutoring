@@ -44,4 +44,12 @@ public class Tenant {
     @Column(nullable = false)
     @Setter
     private TenantStatus status;
+
+    public Tenant(UUID id, String orgCode, String name, Plan plan, TenantStatus status) {
+        this.id = id;
+        this.orgCode = orgCode;
+        this.name = name;
+        this.plan = plan;
+        this.status = status;
+    }
 }

@@ -55,7 +55,31 @@ public class ReportController {
         return new SendResult(parents.size(), parents, emailStatus);
     }
 
+    /** 연결된 자녀가 있는 모든 학생의 리포트를 학부모에게 일괄 발송(정기 발송 수동 트리거). */
+    @PostMapping("/api/reports/send-all")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR','ADMIN')")
+    public BulkResult sendAll() {
+        List<String> students = guardianLinkRepository.findAll().stream()
+                .map(GuardianLink::getStudentSubject).distinct().toList();
+        int notified = 0;
+        for (String student : students) {
+            StudentReport report = reportService.buildReport(student);
+            String body = reportService.summaryText(report);
+            List<String> parents = guardianLinkRepository.findByStudentSubject(student)
+                    .stream().map(GuardianLink::getParentSubject).distinct().toList();
+            for (String parent : parents) {
+                notificationService.notify(parent, "자녀 성적 리포트가 도착했습니다", body);
+                notificationService.dispatch(parent, "자녀 성적 리포트가 도착했습니다", body, NotificationChannel.EMAIL);
+                notified++;
+            }
+        }
+        return new BulkResult(students.size(), notified);
+    }
+
     /** emailStatus: SENT(실발송) | SIMULATED(SMTP 미설정) | FAILED | NONE(대상 없음) */
     public record SendResult(int sent, List<String> parents, String emailStatus) {
+    }
+
+    public record BulkResult(int students, int notified) {
     }
 }

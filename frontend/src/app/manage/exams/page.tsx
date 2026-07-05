@@ -6,15 +6,18 @@ import { useSession } from "@/components/SessionProvider";
 import { useToast } from "@/components/ToastProvider";
 import {
   Exam,
+  ExamRanking,
   ScoreEntryInput,
   StudentGroup,
   createExam,
   deleteExam,
+  examRanking,
   examScores,
   listExams,
   listGroupMembers,
   listGroups,
   recordScores,
+  sendAllReports,
   sendReport,
 } from "@/lib/api";
 
@@ -27,6 +30,7 @@ export default function ExamsAdminPage() {
   const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [selected, setSelected] = useState<Exam | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
+  const [ranking, setRanking] = useState<{ exam: Exam; rows: ExamRanking[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -136,10 +140,30 @@ export default function ExamsAdminPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "발송 실패"); }
   };
 
+  const onSendAll = async () => {
+    if (!confirm("연결된 자녀가 있는 모든 학생의 리포트를 학부모에게 발송할까요?")) return;
+    setBusy(true); setError(null);
+    try {
+      const res = await sendAllReports(session.token);
+      showToast(`학생 ${res.students}명 · 학부모 ${res.notified}명에게 발송했습니다`);
+    } catch (e) { setError(e instanceof Error ? e.message : "일괄 발송 실패"); }
+    finally { setBusy(false); }
+  };
+
+  const openRanking = async (ex: Exam) => {
+    try { setRanking({ exam: ex, rows: await examRanking(session.token, ex.id) }); }
+    catch (e) { setError(e instanceof Error ? e.message : "석차 불러오기 실패"); }
+  };
+
   return (
     <div>
-      <h1>시험 · 성적 <span className="badge tenant">{session.orgCode ?? session.tenantId.slice(0, 4)}</span></h1>
-      <p className="muted">자체 시험·모의고사를 만들고 학생별 성적을 입력합니다. 성적은 학생·학부모의 추이 그래프와 리포트에 반영됩니다.</p>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1>시험 · 성적 <span className="badge tenant">{session.orgCode ?? session.tenantId.slice(0, 4)}</span></h1>
+          <p className="muted">자체 시험·모의고사를 만들고 학생별 성적을 입력합니다. 성적은 학생·학부모의 추이 그래프와 리포트에 반영됩니다.</p>
+        </div>
+        <button className="ghost" onClick={onSendAll} disabled={busy} title="연결된 자녀 전체 학부모에게 리포트 발송">📨 전체 리포트 발송</button>
+      </div>
       {error && <p className="error">{error}</p>}
 
       <div className="card">
@@ -174,6 +198,7 @@ export default function ExamsAdminPage() {
                   <td>{ex.examDate}</td><td>{ex.title}</td><td>{ex.subject ?? "—"}</td><td>{groupName(ex.groupId) ?? "전체"}</td><td>{ex.maxScore}</td>
                   <td style={{ textAlign: "right" }}>
                     <button className="ghost" onClick={() => openExam(ex)}>성적 입력</button>
+                    <button className="ghost" onClick={() => openRanking(ex)}>석차표</button>
                     <button className="ghost" onClick={() => onDeleteExam(ex)}>삭제</button>
                   </td>
                 </tr>
@@ -208,6 +233,28 @@ export default function ExamsAdminPage() {
             <button className="ghost" onClick={() => setRows((rs) => [...rs, { studentSubject: "", score: "", comment: "" }])}>+ 학생 추가</button>
             <button onClick={onSaveScores} disabled={busy}>{busy ? "저장 중…" : "성적 저장"}</button>
           </div>
+        </div>
+      )}
+
+      {ranking && (
+        <div className="card">
+          <h3>석차표 — {ranking.exam.title} <button className="ghost" style={{ marginLeft: 8 }} onClick={() => setRanking(null)}>닫기</button></h3>
+          {ranking.rows.length === 0 ? <p className="notice">입력된 성적이 없습니다.</p> : (
+            <table className="grid">
+              <thead><tr><th>석차</th><th>학생</th><th style={{ textAlign: "right" }}>점수</th><th style={{ textAlign: "right" }}>백분율</th><th style={{ textAlign: "right" }}>상위</th></tr></thead>
+              <tbody>
+                {ranking.rows.map((r) => (
+                  <tr key={r.studentSubject}>
+                    <td><b>{r.rank}</b> / {r.totalTakers}</td>
+                    <td>{r.studentName ?? r.studentSubject}</td>
+                    <td style={{ textAlign: "right" }}>{r.score}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700 }}>{r.percent}%</td>
+                    <td style={{ textAlign: "right" }}>상위 {r.topPercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>

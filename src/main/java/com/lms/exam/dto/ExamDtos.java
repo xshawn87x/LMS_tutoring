@@ -36,9 +36,16 @@ public final class ExamDtos {
         }
     }
 
-    /** 학생 성적 한 건(추이 그래프용) — 시험 정보 + 점수 + 백분율. */
+    /** 학생 성적 한 건(추이 그래프용) — 시험 정보 + 점수 + 백분율 + 석차/백분위. */
     public record StudentScore(
             UUID examId, String title, String subject, LocalDate examDate,
-            int score, int maxScore, int percent, String comment) {
+            int score, int maxScore, int percent, String comment,
+            int rank, int totalTakers, int topPercent) {
+    }
+
+    /** 시험 석차표 한 줄 (강사용). */
+    public record ExamRanking(
+            String studentSubject, String studentName, int score, int percent,
+            int rank, int totalTakers, int topPercent) {
     }
 }

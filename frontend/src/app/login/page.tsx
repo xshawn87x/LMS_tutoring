@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/components/SessionProvider";
 import { useToast } from "@/components/ToastProvider";
-import { confirmPasswordReset, loginAccount, registerAccount, requestPasswordReset } from "@/lib/api";
+import { academySignup, confirmPasswordReset, loginAccount, registerAccount, requestPasswordReset } from "@/lib/api";
 import { homePathForRoles } from "@/lib/portal";
 
 // 시드된 기관 코드 (V11). 운영에선 가입 시 발급/안내된다.
@@ -30,12 +30,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { showToast } = useToast();
 
-  const [mode, setMode] = useState<"login" | "register" | "reset">("login");
+  const [mode, setMode] = useState<"login" | "register" | "reset" | "academy">("login");
   // 비밀번호 재설정
   const [resetStep, setResetStep] = useState<"request" | "confirm">("request");
   const [resetToken, setResetToken] = useState("");
   const [resetNewPw, setResetNewPw] = useState("");
   const [orgCode, setOrgCode] = useState(ORGS[0].code);
+  const [academyName, setAcademyName] = useState(""); // 학원 개설용 기관명
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -119,9 +120,25 @@ export default function LoginPage() {
     } finally { setBusy(false); }
   };
 
+  // 학원(기관) 자가 개설 — 기관 + 첫 관리자 생성 후 자동 로그인
+  const onCreateAcademy = async () => {
+    setError(null);
+    if (!orgCode.trim() || !academyName.trim() || !email.trim()) { setError("기관 코드·학원명·이메일을 입력하세요"); return; }
+    if (password.length < 8) { setError("비밀번호는 8자 이상이어야 합니다"); return; }
+    setBusy(true);
+    try {
+      const auth = await academySignup({ orgCode: orgCode.trim(), academyName: academyName.trim(), adminEmail: email, adminPassword: password, adminName: displayName || undefined });
+      setAuth(auth);
+      showToast(`${academyName} 학원이 개설되었습니다 🎉`);
+      router.push(homePathForRoles(auth.roles));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "학원 개설 실패");
+    } finally { setBusy(false); }
+  };
+
   return (
     <div>
-      <h1>{mode === "login" ? "로그인" : mode === "register" ? "회원가입" : "비밀번호 찾기"}</h1>
+      <h1>{mode === "login" ? "로그인" : mode === "register" ? "회원가입" : mode === "academy" ? "학원 개설" : "비밀번호 찾기"}</h1>
       <p className="muted">
         기관(테넌트)·이메일·비밀번호로 로그인합니다. 비밀번호는 bcrypt로 안전하게 저장되며,
         로그인 시 발급되는 JWT의 <b>테넌트</b>로 보이는 데이터가(RLS), <b>역할</b>로 가능한 작업이(RBAC) 결정됩니다.
@@ -145,14 +162,21 @@ export default function LoginPage() {
           <button className={mode === "login" ? "" : "ghost"} onClick={() => setMode("login")}>로그인</button>
           <button className={mode === "register" ? "" : "ghost"} onClick={() => setMode("register")}>회원가입</button>
           <button className={mode === "reset" ? "" : "ghost"} onClick={() => { setMode("reset"); setResetStep("request"); }}>비밀번호 찾기</button>
+          <button className={mode === "academy" ? "" : "ghost"} onClick={() => { setMode("academy"); setOrgCode(""); }}>학원 개설</button>
         </div>
 
-        <label>기관</label>
-        <select value={orgCode} onChange={(e) => setOrgCode(e.target.value)}>
-          {ORGS.map((o) => (
-            <option key={o.code} value={o.code}>{o.label}</option>
-          ))}
-        </select>
+        <label>{mode === "academy" ? "기관 코드 (영소문자·숫자, 새로 정함)" : "기관"}</label>
+        <input list="orgs-list" value={orgCode} onChange={(e) => setOrgCode(e.target.value)} placeholder={mode === "academy" ? "예: myacademy" : "기관 코드"} />
+        <datalist id="orgs-list">
+          {ORGS.map((o) => <option key={o.code} value={o.code}>{o.label}</option>)}
+        </datalist>
+
+        {mode === "academy" && (
+          <>
+            <label>학원명</label>
+            <input value={academyName} onChange={(e) => setAcademyName(e.target.value)} placeholder="예: 하늘학원" />
+          </>
+        )}
 
         <label>이메일</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
@@ -164,10 +188,14 @@ export default function LoginPage() {
           </>
         )}
 
+        {(mode === "register" || mode === "academy") && (
+          <>
+            <label>이름 {mode === "academy" ? "(관리자)" : "(표시용)"}</label>
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="홍길동" />
+          </>
+        )}
         {mode === "register" && (
           <>
-            <label>이름 (표시용)</label>
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="홍길동" />
             <label>역할</label>
             <select value={role} onChange={(e) => setRole(e.target.value)}>
               {SIGNUP_ROLES.map((r) => (
@@ -194,6 +222,8 @@ export default function LoginPage() {
             ) : (
               <button onClick={onConfirmReset} disabled={busy}>{busy ? "변경 중…" : "새 비밀번호로 변경"}</button>
             )
+          ) : mode === "academy" ? (
+            <button onClick={onCreateAcademy} disabled={busy}>{busy ? "개설 중…" : "학원 개설하고 시작"}</button>
           ) : (
           <button onClick={onSubmit} disabled={busy}>
             {busy ? "처리 중…" : mode === "register" ? "가입하고 시작" : "로그인"}
