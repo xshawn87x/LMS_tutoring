@@ -13,13 +13,6 @@ const FEATURES = [
   { icon: "💳", title: "요금제·정산", desc: "학원별 요금제·자격·청구를 플랫폼에서 관리하고 정산합니다." },
 ];
 
-const STATS = [
-  { value: "6+", label: "핵심 운영 모듈" },
-  { value: "RLS", label: "테넌트 완전 격리" },
-  { value: "실시간", label: "성적·리포트" },
-  { value: "무료", label: "로 시작" },
-];
-
 export default function LandingPage() {
   const { session } = useSession();
   const primaryHref = session ? homePathForRoles(session.roles) : "/login";
@@ -50,14 +43,7 @@ export default function LandingPage() {
             <Link className="button" href={primaryHref}>{primaryLabel}</Link>
             <Link className="button ghost" href="/login">학원 개설</Link>
           </div>
-          <div className="lp-stats">
-            {STATS.map((s) => (
-              <div className="lp-stat" key={s.label}>
-                <span className="lp-stat-v">{s.value}</span>
-                <span className="lp-stat-l">{s.label}</span>
-              </div>
-            ))}
-          </div>
+          <p className="lp-trust">신용카드 없이 몇 분이면 시작 · 학생·성적·학부모 소통을 한 곳에서</p>
         </div>
       </section>
 

@@ -476,10 +476,7 @@ h2 { font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8p
 .lp-hero > .lp-wrap > p { font-size: 18px; color: var(--muted); max-width: 640px; line-height: 1.6; }
 .lp-cta { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
 .lp-cta .button { padding: 13px 26px; font-size: 15px; }
-.lp-stats { display: flex; gap: 40px; margin-top: 46px; flex-wrap: wrap; }
-.lp-stat { display: flex; flex-direction: column; }
-.lp-stat-v { font-size: 30px; font-weight: 800; color: var(--heading); }
-.lp-stat-l { font-size: 13px; color: var(--muted); font-weight: 600; }
+.lp-trust { margin-top: 22px; color: var(--muted); font-size: 13.5px; font-weight: 600; }
 
 .lp-section { padding: 66px 0; }
 .lp-h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; color: var(--heading); margin: 0; }
