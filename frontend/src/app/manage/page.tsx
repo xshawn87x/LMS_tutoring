@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/SessionProvider";
+import { useFeatures } from "@/components/FeaturesProvider";
 import { CourseStats, getInstructorCourses, levelLabel } from "@/lib/api";
 
 export default function InstructorDashboardPage() {
   const { session, hydrated } = useSession();
+  const { isEnabled } = useFeatures();
   const [stats, setStats] = useState<CourseStats[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,14 +45,16 @@ export default function InstructorDashboardPage() {
   const totalCompleted = stats.reduce((a, s) => a + s.completedCount, 0);
   const avgProgress = stats.length ? Math.round(stats.reduce((a, s) => a + s.avgProgress, 0) / stats.length) : 0;
 
-  const quick: { href: string; icon: string; label: string; admin?: boolean }[] = [
-    { href: "/manage/exams", icon: "📝", label: "시험·성적" },
-    { href: "/manage/placement", icon: "🧩", label: "반편성" },
-    { href: "/manage/groups", icon: "🗓", label: "반·출석" },
+  const quick: { href: string; icon: string; label: string; admin?: boolean; flag?: string }[] = [
+    { href: "/manage/exams", icon: "📝", label: "시험·성적", flag: "EXAMS" },
+    { href: "/manage/placement", icon: "🧩", label: "반편성", flag: "PLACEMENT" },
+    { href: "/manage/groups", icon: "🗓", label: "반·출석", flag: "ATTENDANCE" },
+    { href: "/manage/counseling", icon: "💬", label: "상담", flag: "COUNSELING" },
     { href: "/courses", icon: "📚", label: "과정·수강" },
     { href: "/notices", icon: "📢", label: "공지" },
+    { href: "/manage/notifications", icon: "🔔", label: "알림 발송", admin: true, flag: "NOTIFICATIONS" },
     { href: "/manage/members", icon: "👥", label: "회원", admin: true },
-    { href: "/manage/market", icon: "🛒", label: "마켓", admin: true },
+    { href: "/manage/market", icon: "🛒", label: "마켓", admin: true, flag: "MARKET" },
     { href: "/manage/settings", icon: "⚙️", label: "환경설정", admin: true },
     { href: "/manage/features", icon: "🎛", label: "기능", admin: true },
   ];
@@ -70,7 +74,7 @@ export default function InstructorDashboardPage() {
 
       <div className="section-head" style={{ marginTop: 8 }}><h2>빠른 작업</h2></div>
       <div className="quick-grid">
-        {quick.filter((q) => !q.admin || isAdmin).map((q) => (
+        {quick.filter((q) => (!q.admin || isAdmin) && (!q.flag || isEnabled(q.flag))).map((q) => (
           <Link className="quick-item" href={q.href} key={q.href}>
             <span className="quick-ic">{q.icon}</span>
             <span>{q.label}</span>

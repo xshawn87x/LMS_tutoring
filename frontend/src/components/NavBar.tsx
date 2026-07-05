@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "./SessionProvider";
+import { useFeatures } from "./FeaturesProvider";
 import { getSettings } from "@/lib/api";
 
 // 운영(강사·관리자) 상단 내비. 학습자 공용 페이지(과정·공지 등)에서도 강사·관리자에겐
 // 이 다크 내비가 렌더되어 운영 포털과 테마·내비가 통일된다. (학생·학부모는 LearnerLayout)
 export function NavBar() {
   const { session, logout } = useSession();
+  const { isEnabled } = useFeatures();
   const [brand, setBrand] = useState<{ name: string | null; logo: string | null }>({ name: null, logo: null });
 
   const isAdmin = !!session && session.roles.includes("ADMIN");
@@ -37,13 +39,15 @@ export function NavBar() {
       {session && (
         <span className="links">
           <Link href="/manage">대시보드</Link>
-          <Link href="/manage/exams">시험·성적</Link>
-          <Link href="/manage/placement">반편성</Link>
-          <Link href="/manage/groups">반·출석</Link>
+          {isEnabled("EXAMS") && <Link href="/manage/exams">시험·성적</Link>}
+          {isEnabled("PLACEMENT") && <Link href="/manage/placement">반편성</Link>}
+          {isEnabled("ATTENDANCE") && <Link href="/manage/groups">반·출석</Link>}
+          {isEnabled("COUNSELING") && <Link href="/manage/counseling">상담</Link>}
           <Link href="/courses">과정</Link>
           <Link href="/notices">공지</Link>
+          {isAdmin && isEnabled("NOTIFICATIONS") && <Link href="/manage/notifications">알림</Link>}
           {isAdmin && <Link href="/manage/members">회원</Link>}
-          {isAdmin && <Link href="/manage/market">마켓</Link>}
+          {isAdmin && isEnabled("MARKET") && <Link href="/manage/market">마켓</Link>}
           {isAdmin && <Link href="/manage/settings">환경설정</Link>}
           {isAdmin && <Link href="/manage/features">기능</Link>}
         </span>

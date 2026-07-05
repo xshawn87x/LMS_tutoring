@@ -57,6 +57,7 @@ export function LearnerLayout({ children }: { children: ReactNode }) {
       {isEnabled("ENROLLMENTS") && item("/my-learning", "📚", "내 학습")}
       {isStudent && item("/grades", "📈", "내 성적")}
       {isStudent && isEnabled("DIAGNOSIS") && item("/me/profile", "🎯", "관심분야")}
+      {isStudent && isEnabled("COUNSELING") && item("/counseling", "💬", "상담")}
       {isParent && item("/children", "👨‍👩‍👧", "자녀 현황")}
       {item("/notices", "📢", "공지사항")}
       {item("/me/notifications", "🔔", "알림", unread)}

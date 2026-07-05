@@ -211,6 +211,9 @@ h2 { font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8p
 .pf-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .pf-pill.paid { background: rgba(43,209,126,.16); color: var(--accent-2); }
 .pf-pill.issued { background: rgba(255,180,80,.16); color: #ffb450; }
+/* 라이트(학습자)에선 주황을 진하게 — 흰 배경 가독성 */
+.learner .pf-pill.issued { background: rgba(214,140,20,.14); color: #b45309; }
+.learner .pf-pill.paid { background: rgba(31,138,76,.12); }
 
 /* 요금제 카탈로그 */
 .pf-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 8px; }
@@ -237,6 +240,8 @@ h2 { font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8p
   --text: #2a3444;
   --heading: #0f1729;
   --muted: #667085;
+  /* 밝은 배경에선 초록을 진하게(텍스트 가독성). 다크 기본값 #2bd17e는 흰 배경에서 안 보임. */
+  --accent-2: #1f8a4c;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -358,8 +363,12 @@ h2 { font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8p
   border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600;
 }
 .chip.accent { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
-.chip.free { background: rgba(31,138,76,0.12); color: #1f8a4c; }
-.chip.paid { background: rgba(214,140,20,0.14); color: #b8860b; }
+/* 다크 기본 — 밝은 텍스트라야 어두운 배경에서 보인다 */
+.chip.free { background: rgba(45,209,126,0.16); color: #5be59b; }
+.chip.paid { background: rgba(240,180,52,0.16); color: #f6c453; }
+/* 라이트(학습자) — 진한 텍스트라야 흰 배경에서 보인다 */
+.learner .chip.free { background: rgba(31,138,76,0.12); color: #1f8a4c; }
+.learner .chip.paid { background: rgba(214,140,20,0.14); color: #a16207; }
 
 /* 진도 요약 라인 (카드 하단) */
 .progress-line { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); font-weight: 600; }

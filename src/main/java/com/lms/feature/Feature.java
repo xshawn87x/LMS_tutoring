@@ -15,7 +15,18 @@ public enum Feature {
     DIAGNOSIS("역량 진단·관심분야", true, true),
     RECOMMENDATIONS("맞춤 추천", true, true),
     AI_CURATION("AI 콘텐츠 분석·큐레이션", false, true),
-    CERTIFICATES("수료증 발급", false, true);
+    CERTIFICATES("수료증 발급", false, true),
+    // 입시/보습학원 운영 모듈 — 기관마다 켜고/끌 수 있다(기본 켜짐). 화면 노출(내비)을 제어.
+    EXAMS("시험·성적", true, true),
+    PLACEMENT("성적 기반 반편성", true, true),
+    ATTENDANCE("반·출석", true, true),
+    ASSIGNMENTS("과제", true, true),
+    QNA("수강 Q&A", true, true),
+    MATERIALS("자료실", true, true),
+    COUNSELING("상담", true, true),
+    NOTIFICATIONS("알림 발송", true, true),
+    TUITION("수강료 결제", true, true),
+    MARKET("콘텐츠 마켓", true, true);
 
     private final String displayName;
     private final boolean defaultEnabled;
