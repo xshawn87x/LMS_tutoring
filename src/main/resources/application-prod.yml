@@ -1,0 +1,47 @@
+# ============================================================
+# 운영(prod) 프로파일 — application.yml 위에 덮어쓴다.
+# 활성화: SPRING_PROFILES_ACTIVE=prod (docker-compose.prod.yml 참고)
+# 시크릿·DB 자격은 반드시 환경변수로 주입(ProductionReadinessGuard가 기본값이면 기동 차단).
+# ============================================================
+spring:
+  # DB 접속/마이그레이션 자격은 환경변수로만 주입:
+  #   SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
+  #   SPRING_FLYWAY_URL / SPRING_FLYWAY_USER / SPRING_FLYWAY_PASSWORD
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+# 리버스 프록시(nginx/Caddy)가 TLS를 종료하고 X-Forwarded-* 를 전달하는 구성
+server:
+  forward-headers-strategy: framework
+  shutdown: graceful
+
+# 운영 관측성 — 공개 표면 최소화(health/info만). metrics 등은 내부망/인증으로만.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: false
+
+# 운영에선 API 문서(Swagger) 비공개
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.lms: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO

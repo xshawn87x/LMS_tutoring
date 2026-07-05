@@ -1,0 +1,13 @@
+# Caddy — 도메인별 자동 HTTPS(Let's Encrypt) + 리버스 프록시.
+# 도메인의 A 레코드를 이 서버 IP로 향하게 하면 인증서가 자동 발급됩니다.
+# {$APP_DOMAIN}/{$API_DOMAIN} 는 docker-compose.prod.yml 의 환경변수로 주입됩니다.
+
+{$APP_DOMAIN} {
+	encode gzip
+	reverse_proxy frontend:3000
+}
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy backend:8080
+}
