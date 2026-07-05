@@ -1,11 +1,6 @@
-import { LearnerLayout } from "@/components/LearnerLayout";
+import { LearnerAreaChrome } from "@/components/LearnerAreaChrome";
 
-// 학습자 포털(학생·학부모) — 좌측 사이드바 + Coursera 라이트 테마.
-// 라우트 그룹 레이아웃이라 이 그룹의 페이지는 SSR부터 학습자 크롬으로 렌더된다(플래시 없음).
+// 학습자 그룹 페이지 — 역할에 따라 크롬을 나눈다(강사·관리자=다크 운영, 학생·학부모=라이트 사이드바).
 export default function LearnerGroupLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="learner">
-      <LearnerLayout>{children}</LearnerLayout>
-    </div>
-  );
+  return <LearnerAreaChrome>{children}</LearnerAreaChrome>;
 }
