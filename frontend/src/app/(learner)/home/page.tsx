@@ -12,7 +12,9 @@ import {
   getRecommendations,
   levelLabel,
   listCourses,
+  myAttendance,
   myEnrollments,
+  myScores,
   Recommendation,
 } from "@/lib/api";
 import { courseEmoji, thumbBg } from "@/lib/thumb";
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [browse, setBrowse] = useState<Course[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [summary, setSummary] = useState<{ avg: number | null; rank: string | null; attRate: number | null }>({ avg: null, rank: null, attRate: null });
   const [error, setError] = useState<string | null>(null);
 
   const isLearner = !!session && session.roles.includes("STUDENT");
@@ -63,6 +66,19 @@ export default function DashboardPage() {
       if (isLearner && isEnabled("RECOMMENDATIONS")) {
         setRecs(await getRecommendations(session.token));
       }
+      // 성적·출석 요약
+      if (isLearner) {
+        const [sc, att] = await Promise.all([
+          myScores(session.token).catch(() => []),
+          myAttendance(session.token).catch(() => []),
+        ]);
+        const avg = sc.length ? Math.round(sc.reduce((a, s) => a + s.percent, 0) / sc.length) : null;
+        const last = sc.length ? sc[sc.length - 1] : null;
+        const rank = last ? `${last.rank}/${last.totalTakers}` : null;
+        const attended = att.filter((a) => a.status !== "ABSENT").length;
+        const attRate = att.length ? Math.round((attended / att.length) * 100) : null;
+        setSummary({ avg, rank, attRate });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기 실패");
     }
@@ -91,6 +107,20 @@ export default function DashboardPage() {
         </div>
       </section>
       {error && <p className="error">{error}</p>}
+
+      {/* 내 요약 (학생) */}
+      {isLearner && (summary.avg != null || summary.attRate != null || inProgress.length > 0) && (
+        <div className="stat-row" style={{ marginTop: 16 }}>
+          <div className="stat-tile"><span className="st-label">성적 평균</span>
+            <span className="st-value">{summary.avg ?? "—"}{summary.avg != null && <small>%</small>}</span></div>
+          <div className="stat-tile"><span className="st-label">최근 석차</span>
+            <span className="st-value" style={{ fontSize: 22 }}>{summary.rank ?? "—"}</span></div>
+          <div className="stat-tile"><span className="st-label">출석률</span>
+            <span className="st-value">{summary.attRate ?? "—"}{summary.attRate != null && <small>%</small>}</span></div>
+          <div className="stat-tile"><span className="st-label">진행 중</span>
+            <span className="st-value">{inProgress.length}<small>과정</small></span></div>
+        </div>
+      )}
 
       {/* 이어보기 */}
       {isEnabled("ENROLLMENTS") && inProgress.length > 0 && (

@@ -9,6 +9,7 @@ import { accessRedirect } from "@/lib/portal";
 const PUBLIC_PREFIXES = ["/login", "/platform"];
 
 function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true; // 공개 랜딩 페이지
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 

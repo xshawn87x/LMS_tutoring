@@ -771,6 +771,15 @@ export const platformMarketCreate = (token: string, body: { title: string; descr
 export const platformMarketDelete = (token: string, id: string) => request<void>(`/api/platform/market/content/${id}`, token, { method: "DELETE" });
 export const platformSettlements = (token: string) => request<SettlementItem[]>("/api/platform/market/settlements", token);
 
+// 플랫폼 애널리틱스 (매출·이탈·학원별 KPI)
+export interface RevenuePoint { period: string; issued: number; paid: number; }
+export interface TenantKpi { orgCode: string; name: string; plan: string; status: string; monthlyPrice: number; latestInvoice: string; }
+export interface PlatformAnalytics {
+  tenantCount: number; activeCount: number; pastDueCount: number; suspendedCount: number; churnRate: number;
+  mrr: number; planDistribution: Record<string, number>; revenueTrend: RevenuePoint[]; tenants: TenantKpi[];
+}
+export const platformAnalytics = (token: string) => request<PlatformAnalytics>("/api/platform/analytics", token);
+
 // ===== Tier4: 학원 환경설정 =====
 export interface TenantSettingsView { tenantId: string | null; displayName: string | null; logoUrl: string | null; primaryColor: string | null; contact: string | null; terms: string | null; }
 export const getSettings = (token: string) => request<TenantSettingsView>("/api/settings", token);

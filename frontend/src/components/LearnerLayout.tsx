@@ -52,7 +52,7 @@ export function LearnerLayout({ children }: { children: ReactNode }) {
 
   const nav = session && (
     <nav className="ls-nav">
-      {item("/", "🏠", "홈")}
+      {item("/home", "🏠", "홈")}
       {item("/courses", "🧭", "과정 탐색")}
       {isEnabled("ENROLLMENTS") && item("/my-learning", "📚", "내 학습")}
       {isStudent && item("/grades", "📈", "내 성적")}
@@ -75,7 +75,7 @@ export function LearnerLayout({ children }: { children: ReactNode }) {
       {open && <div className="ls-overlay" onClick={() => setOpen(false)} />}
 
       <aside className={`learner-sidebar${open ? " open" : ""}`}>
-        <Link href="/" className="ls-brand">
+        <Link href="/home" className="ls-brand">
           {brand.logo
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={brand.logo} alt="" style={{ height: 24, maxWidth: 110, objectFit: "contain" }} />
@@ -101,7 +101,7 @@ export function LearnerLayout({ children }: { children: ReactNode }) {
         {/* 모바일 상단바 */}
         <div className="ls-topbar">
           <button className="ghost ls-hamburger" onClick={() => setOpen(true)} aria-label="메뉴">☰</button>
-          <Link href="/" className="ls-brand" style={{ padding: 0 }}>
+          <Link href="/home" className="ls-brand" style={{ padding: 0 }}>
             <span className="ls-brand-mark">🎓</span><span>{brand.name || "LMS"}</span>
           </Link>
           <span style={{ flex: 1 }} />

@@ -38,16 +38,47 @@ export default function InstructorDashboardPage() {
     );
   }
 
+  const isAdmin = session.roles.includes("ADMIN");
   const totalEnroll = stats.reduce((a, s) => a + s.enrollmentCount, 0);
   const totalCompleted = stats.reduce((a, s) => a + s.completedCount, 0);
+  const avgProgress = stats.length ? Math.round(stats.reduce((a, s) => a + s.avgProgress, 0) / stats.length) : 0;
+
+  const quick: { href: string; icon: string; label: string; admin?: boolean }[] = [
+    { href: "/manage/exams", icon: "📝", label: "시험·성적" },
+    { href: "/manage/placement", icon: "🧩", label: "반편성" },
+    { href: "/manage/groups", icon: "🗓", label: "반·출석" },
+    { href: "/courses", icon: "📚", label: "과정·수강" },
+    { href: "/notices", icon: "📢", label: "공지" },
+    { href: "/manage/members", icon: "👥", label: "회원", admin: true },
+    { href: "/manage/market", icon: "🛒", label: "마켓", admin: true },
+    { href: "/manage/settings", icon: "⚙️", label: "환경설정", admin: true },
+    { href: "/manage/features", icon: "🎛", label: "기능", admin: true },
+  ];
 
   return (
     <div>
-      <h1>강사 대시보드 <span className="badge tenant">테넌트 {session.tenantId.slice(0, 4)}</span></h1>
-      <p className="muted">
-        이 기관의 과정 현황입니다. 과정 {stats.length}개 · 총 수강 {totalEnroll}건 · 완료 {totalCompleted}건
-      </p>
+      <h1>운영 대시보드 <span className="badge tenant">{session.orgCode ?? session.tenantId.slice(0, 4)}</span></h1>
+      <p className="muted">{session.displayName || session.subject}님, 학원 운영 현황을 한눈에 확인하세요.</p>
       {error && <p className="error">{error}</p>}
+
+      <div className="stat-row">
+        <div className="stat-tile"><span className="st-label">과정</span><span className="st-value">{stats.length}</span></div>
+        <div className="stat-tile"><span className="st-label">총 수강</span><span className="st-value">{totalEnroll}</span></div>
+        <div className="stat-tile"><span className="st-label">완료</span><span className="st-value">{totalCompleted}</span></div>
+        <div className="stat-tile"><span className="st-label">평균 진도</span><span className="st-value">{avgProgress}<small>%</small></span></div>
+      </div>
+
+      <div className="section-head" style={{ marginTop: 8 }}><h2>빠른 작업</h2></div>
+      <div className="quick-grid">
+        {quick.filter((q) => !q.admin || isAdmin).map((q) => (
+          <Link className="quick-item" href={q.href} key={q.href}>
+            <span className="quick-ic">{q.icon}</span>
+            <span>{q.label}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="section-head"><h2>과정 현황</h2></div>
       {stats.length === 0 && <p className="notice">과정이 없습니다. <Link href="/courses">과정 만들기</Link></p>}
 
       {stats.map((s) => (

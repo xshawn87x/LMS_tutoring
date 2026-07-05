@@ -15,11 +15,11 @@ export function isAdmin(roles: string[]): boolean {
   return roles.includes("ADMIN");
 }
 
-// 로그인/랜딩 시 역할에 맞는 홈 경로
+// 로그인 후 역할에 맞는 홈 경로 ("/"는 공개 랜딩, 학습자 대시보드는 "/home")
 export function homePathForRoles(roles: string[]): string {
   if (isOps(roles)) return "/manage";
   if (roles.includes("PARENT") && !roles.includes("STUDENT")) return "/children";
-  return "/";
+  return "/home";
 }
 
 // 접근 거부 시 보낼 경로를 반환한다. null이면 접근 허용.

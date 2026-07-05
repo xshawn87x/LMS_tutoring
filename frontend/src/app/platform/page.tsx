@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
+import { RevenueChart } from "@/components/RevenueChart";
 import {
   AddonPriceView,
   AuditView,
   MarketContentItem,
+  PlatformAnalytics,
   PlatformPlan,
   PlatformTenant,
   PricingView,
   SettlementItem,
   TenantBillingView,
   formatMoney,
+  platformAnalytics,
   platformMarketCreate,
   platformMarketDelete,
   platformMarketList,
@@ -37,7 +40,7 @@ import {
 // 플랫폼(SaaS 제공자) 슈퍼관리자 토큰은 기관 세션과 완전히 별개다.
 const PLATFORM_TOKEN_KEY = "lms.platform.token";
 
-type View = "overview" | "tenants" | "pricing" | "audit" | "market";
+type View = "overview" | "analytics" | "tenants" | "pricing" | "audit" | "market";
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: "정상", PAST_DUE: "연체", SUSPENDED: "정지" };
 
@@ -63,6 +66,7 @@ export default function PlatformConsole() {
   const [mkTitle, setMkTitle] = useState("");
   const [mkPrice, setMkPrice] = useState("100000");
   const [mkProvider, setMkProvider] = useState("본사콘텐츠");
+  const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
 
@@ -108,6 +112,7 @@ export default function PlatformConsole() {
       setTenants(t);
       setPricing(pr);
       setSelectedId((cur) => cur ?? (t[0]?.id ?? null));
+      platformAnalytics(tk).then(setAnalytics).catch(() => { /* 무시 */ });
       await Promise.all([...t.map((tenant) => loadBilling(tk, tenant.id)), reloadAudit(tk), reloadMarket(tk)]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기 실패");
@@ -334,6 +339,7 @@ export default function PlatformConsole() {
 
   const navItems: { key: View; icon: string; label: string }[] = [
     { key: "overview", icon: "📊", label: "개요" },
+    { key: "analytics", icon: "📈", label: "통계 · 매출" },
     { key: "tenants", icon: "🏢", label: "테넌트 관리" },
     { key: "pricing", icon: "🏷️", label: "요금제 · 가격" },
     { key: "market", icon: "🛒", label: "콘텐츠 마켓" },
@@ -399,6 +405,7 @@ export default function PlatformConsole() {
             {error && <p className="error">{error}</p>}
 
             {view === "overview" && renderOverview()}
+            {view === "analytics" && renderAnalytics()}
             {view === "tenants" && renderTenants()}
             {view === "pricing" && renderPricing()}
             {view === "audit" && renderAudit()}
@@ -410,6 +417,61 @@ export default function PlatformConsole() {
   );
 
   // ===================== 뷰 렌더러 =====================
+
+  function renderAnalytics() {
+    const a = analytics;
+    if (!a) return <p className="notice">통계를 불러오는 중…</p>;
+    const totalRevenue = a.revenueTrend.reduce((s, r) => s + r.paid, 0);
+    const planMax = Math.max(1, ...Object.values(a.planDistribution));
+    return (
+      <>
+        <div className="pf-header"><div><h1>통계 · 매출</h1><div className="pf-sub">전 학원(테넌트) SaaS 지표 — 매출 추이·MRR·플랜 분포·이탈</div></div></div>
+
+        <div className="pf-kpis">
+          <div className="pf-kpi"><div className="k-label">월 반복 매출(MRR)</div><div className="k-value">₩{a.mrr.toLocaleString("ko-KR")}</div><div className="k-foot">활성 학원 {a.activeCount}곳</div></div>
+          <div className="pf-kpi"><div className="k-label">누적 결제액</div><div className="k-value">₩{totalRevenue.toLocaleString("ko-KR")}</div><div className="k-foot">인보이스 결제 합계</div></div>
+          <div className="pf-kpi"><div className="k-label">학원 수</div><div className="k-value">{a.tenantCount}</div><div className="k-foot">정상 {a.activeCount} · 연체 {a.pastDueCount} · 정지 {a.suspendedCount}</div></div>
+          <div className="pf-kpi"><div className="k-label">이탈률</div><div className="k-value">{a.churnRate}%</div><div className="k-foot">연체+정지 / 전체</div></div>
+        </div>
+
+        <div className="pf-panel">
+          <h3>월별 매출 추이</h3>
+          <RevenueChart data={a.revenueTrend} />
+        </div>
+
+        <div className="pf-panel">
+          <h3>요금제 분포</h3>
+          <div className="pf-dist">
+            {Object.entries(a.planDistribution).map(([plan, n]) => (
+              <div className="pf-dist-row" key={plan}>
+                <span className={`pf-plan-tag pf-plan-${plan}`}>{plan}</span>
+                <div className="pf-dist-track"><div className="pf-dist-fill" style={{ width: `${(n / planMax) * 100}%`, background: plan === "PRO" ? "var(--accent-2)" : plan === "STANDARD" ? "var(--accent)" : "var(--muted)" }} /></div>
+                <span>{n}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pf-panel">
+          <h3>학원별 KPI</h3>
+          <table className="grid">
+            <thead><tr><th>학원</th><th>요금제</th><th>상태</th><th style={{ textAlign: "right" }}>월 매출</th><th>최근 인보이스</th></tr></thead>
+            <tbody>
+              {a.tenants.map((t) => (
+                <tr key={t.orgCode}>
+                  <td><b>{t.name}</b> <span className="muted">{t.orgCode}</span></td>
+                  <td><span className={`pf-plan-tag pf-plan-${t.plan}`}>{t.plan}</span></td>
+                  <td>{statusPill(t.status)}</td>
+                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>₩{t.monthlyPrice.toLocaleString("ko-KR")}</td>
+                  <td className="muted">{t.latestInvoice}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    );
+  }
 
   function renderOverview() {
     return (

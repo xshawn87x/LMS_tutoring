@@ -47,13 +47,23 @@ public class PlatformController {
     private final BillingService billingService;
     private final AuditService auditService;
     private final AccountStandingService accountStandingService;
+    private final PlatformAnalyticsService analyticsService;
 
     public PlatformController(PlatformService service, BillingService billingService,
-                             AuditService auditService, AccountStandingService accountStandingService) {
+                             AuditService auditService, AccountStandingService accountStandingService,
+                             PlatformAnalyticsService analyticsService) {
         this.service = service;
         this.billingService = billingService;
         this.auditService = auditService;
         this.accountStandingService = accountStandingService;
+        this.analyticsService = analyticsService;
+    }
+
+    /** 플랫폼 애널리틱스 — 매출 추이·MRR·플랜 분포·이탈·학원별 KPI. */
+    @GetMapping("/analytics")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public PlatformAnalyticsService.PlatformAnalytics analytics() {
+        return analyticsService.analytics();
     }
 
     /** 슈퍼관리자 로그인 (공개). 설정 부트스트랩 계정 검증 → 플랫폼 토큰 발급. */
